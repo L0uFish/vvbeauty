@@ -45,7 +45,11 @@ export default function LoginModal({ open, onClose, onLoginSuccess }: any) {
         <Auth
           supabaseClient={supabase}
           providers={["google", "facebook"]}
-          redirectTo={currentUrl} // 🧠 key line — return here after OAuth
+          redirectTo={
+            typeof window !== "undefined"
+            ? `${window.location.origin}${window.location.pathname}${window.location.search}`
+            : undefined
+        }
         />
       </div>
     </div>,
