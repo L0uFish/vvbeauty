@@ -7,7 +7,7 @@ import Calendar from "./Calendar";
 import Timeslots from "./Timeslots";
 import "./plannen.css";
 
-export default function Plannen() {
+export default function PlannenInner() {
   const searchParams = useSearchParams();
   const serviceId = searchParams.get("service");
 
@@ -15,6 +15,8 @@ export default function Plannen() {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!serviceId) return;
@@ -63,6 +65,38 @@ export default function Plannen() {
     );
   }
 
+  // --- Handle booking insert ---
+  const handleBooking = async () => {
+    if (!selectedDate || !selectedTime || !service) return;
+    setSaving(true);
+    setMessage(null);
+
+    const { error } = await supabase.from("appointments").insert([
+      {
+        service_id: service.id,
+        date: selectedDate,
+        time: selectedTime,
+        status: "pending",
+      },
+    ]);
+
+    if (error) {
+      console.error(error);
+      setMessage("❌ Er is iets misgegaan bij het boeken. Probeer opnieuw.");
+    } else {
+      const formattedDate = new Date(selectedDate).toLocaleDateString("nl-BE", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      });
+      setMessage(`✅ Je afspraak is ingepland voor ${formattedDate} om ${selectedTime}.`);
+      setSelectedTime(null);
+      setSelectedDate(null);
+    }
+
+    setSaving(false);
+  };
+
   return (
     <main className="plannen-container">
       <div className="plannen-card">
@@ -80,16 +114,11 @@ export default function Plannen() {
               <>€{service.price}</>
             )}
           </div>
-          <div className="plannen-duration">
-            {service.duration_minutes} min
-          </div>
+          <div className="plannen-duration">{service.duration_minutes} min</div>
         </div>
 
         {/* Calendar */}
-        <Calendar
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-        />
+        <Calendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
 
         {/* Timeslots */}
         {selectedDate && (
@@ -102,14 +131,18 @@ export default function Plannen() {
         {/* Confirm Button */}
         <button
           type="button"
-          disabled={!selectedDate || !selectedTime}
+          disabled={!selectedDate || !selectedTime || saving}
           className={`plannen-button ${
             selectedDate && selectedTime ? "active" : ""
           }`}
+          onClick={handleBooking}
         >
-          Bevestig afspraak
+          {saving ? "Bezig..." : "Bevestig afspraak"}
         </button>
+
+        {message && <p className="confirmation-message">{message}</p>}
       </div>
     </main>
   );
 }
+
