@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Calendar from "./Calendar";
 import Timeslots from "./Timeslots";
+import LoginModal from "@/app/components/LoginModal";
 import "./plannen.css";
 
 export default function PlannenInner() {
@@ -17,7 +18,21 @@ export default function PlannenInner() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [session, setSession] = useState<any>(null);
+  const [showLogin, setShowLogin] = useState(false);
 
+  // 🔹 Fetch user session (detect if logged in)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) =>
+      setSession(session)
+    );
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  // 🔹 Fetch service data
   useEffect(() => {
     if (!serviceId) return;
     const fetchService = async () => {
@@ -32,6 +47,47 @@ export default function PlannenInner() {
     fetchService();
   }, [serviceId]);
 
+  // 🔹 Handle new appointment
+  const handleBooking = async () => {
+    if (!selectedDate || !selectedTime || !service) return;
+
+    // Require login before continuing
+    if (!session) {
+      setShowLogin(true);
+      return;
+    }
+
+    setSaving(true);
+    setMessage(null);
+
+    const { error } = await supabase.from("appointments").insert([
+      {
+        service_id: service.id,
+        user_id: session.user.id,
+        date: selectedDate,
+        time: selectedTime,
+        status: "pending",
+      },
+    ]);
+
+    if (error) {
+      console.error(error);
+      setMessage("❌ Er is iets misgegaan bij het boeken. Probeer opnieuw.");
+    } else {
+      const formattedDate = new Date(selectedDate).toLocaleDateString("nl-BE", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      });
+      setMessage(`✅ Je afspraak is ingepland voor ${formattedDate} om ${selectedTime}.`);
+      setSelectedTime(null);
+      setSelectedDate(null);
+    }
+
+    setSaving(false);
+  };
+
+  // 🔹 Loading / fallback states
   if (!serviceId) {
     return (
       <main className="plannen-container">
@@ -65,38 +121,7 @@ export default function PlannenInner() {
     );
   }
 
-  // --- Handle booking insert ---
-  const handleBooking = async () => {
-    if (!selectedDate || !selectedTime || !service) return;
-    setSaving(true);
-    setMessage(null);
-
-    const { error } = await supabase.from("appointments").insert([
-      {
-        service_id: service.id,
-        date: selectedDate,
-        time: selectedTime,
-        status: "pending",
-      },
-    ]);
-
-    if (error) {
-      console.error(error);
-      setMessage("❌ Er is iets misgegaan bij het boeken. Probeer opnieuw.");
-    } else {
-      const formattedDate = new Date(selectedDate).toLocaleDateString("nl-BE", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-      });
-      setMessage(`✅ Je afspraak is ingepland voor ${formattedDate} om ${selectedTime}.`);
-      setSelectedTime(null);
-      setSelectedDate(null);
-    }
-
-    setSaving(false);
-  };
-
+  // 🔹 Main UI
   return (
     <main className="plannen-container">
       <div className="plannen-card">
@@ -142,7 +167,16 @@ export default function PlannenInner() {
 
         {message && <p className="confirmation-message">{message}</p>}
       </div>
+
+      {/* Login Modal Overlay */}
+      <LoginModal
+        open={showLogin}
+        onClose={() => setShowLogin(false)}
+        onLoginSuccess={() => {
+          setShowLogin(false);
+          handleBooking(); // automatically re-try booking after login
+        }}
+      />
     </main>
   );
 }
-
