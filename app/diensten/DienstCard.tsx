@@ -26,7 +26,7 @@ export default function DienstCard({ service }: { service: any }) {
 
   return (
     <Link
-      href={`/boeken?service=${service.id}`}
+      href={`/plannen?service=${service.id}`}
       className={`dienst-card ${showDesc ? "show-desc" : ""}`}
       onClick={handleClick}
     >
