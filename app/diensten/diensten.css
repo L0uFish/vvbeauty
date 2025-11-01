@@ -135,10 +135,47 @@ section .grid {
   transform: translateY(0);
 }
 
-/* --- Mobile tap mode --- */
+/* --- Mobile responsiveness --- */
 @media (max-width: 768px) {
+  main {
+    padding: 2rem 1rem;
+  }
+
   .page-container {
     width: 90%;
+    gap: 3rem;
+  }
+
+  section {
+    padding: 1.25rem;
+  }
+
+  section h2 {
+    font-size: 1.6rem;
+    margin-bottom: 1rem;
+  }
+
+  section .grid {
+    grid-template-columns: 1fr; /* One card per row */
+    gap: 1.25rem;
+  }
+
+  .dienst-card {
+    padding: 1.25rem;
+    min-height: 200px;
+  }
+
+  .dienst-title {
+    font-size: 1rem;
+  }
+
+  .dienst-price {
+    font-size: 0.95rem;
+  }
+
+  .dienst-desc {
+    font-size: 0.85rem;
+    padding: 1rem;
   }
 
   .dienst-card.show-desc .dienst-desc {
@@ -150,5 +187,25 @@ section .grid {
   .dienst-card.show-desc .dienst-title,
   .dienst-card.show-desc .dienst-price {
     opacity: 0.2;
+  }
+}
+
+/* --- Ultra small devices --- */
+@media (max-width: 480px) {
+  section h2 {
+    font-size: 1.4rem;
+  }
+
+  .dienst-card {
+    padding: 1rem;
+    border-radius: 0.75rem;
+  }
+
+  .dienst-title {
+    font-size: 0.95rem;
+  }
+
+  .dienst-price {
+    font-size: 0.9rem;
   }
 }
