@@ -13,10 +13,12 @@ export default function PlannenInner() {
   const searchParams = useSearchParams();
 
   // ✅ Detect actual query changes (works with back/forward)
-  const serviceId = useMemo(() => {
-    const id = searchParams?.get("service");
-    return id && id.trim() !== "" ? id : null;
-  }, [searchParams.toString()]);
+  const [serviceId, setServiceId] = useState<string | null>(null);
+
+    useEffect(() => {
+      const id = searchParams?.get("service");
+      setServiceId(id && id.trim() !== "" ? id : null);
+    }, [searchParams]);
 
   const [service, setService] = useState<any>(null);
   const [loading, setLoading] = useState(true);
