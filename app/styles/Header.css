@@ -1,0 +1,173 @@
+/* ---- Header positioning ---- */
+.top-header {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  z-index: 50;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: auto;
+}
+
+/* ---- Login Button ---- */
+.login-button {
+  padding: 0.6rem 1.25rem;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(233, 30, 99, 0.2);
+  border-radius: 2rem;
+  text-decoration: none;
+  color: #b23561;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+}
+
+.login-button:hover {
+  background: #fef5f7;
+  border-color: #e88aab;
+  color: #e91e63;
+  transform: translateY(-2px);
+}
+
+/* ---- User Menu Toggle ---- */
+.user-menu-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.user-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(233, 30, 99, 0.2);
+  border-radius: 2rem;
+  padding: 0.45rem 0.9rem;
+  font-weight: 600;
+  color: #b23561;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.user-toggle:hover {
+  background: #fef5f7;
+  border-color: #e88aab;
+}
+
+/* ---- User Initial Circle ---- */
+.user-initial {
+  background: #b23561;
+  color: #fff;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* ---- User name and chevron ---- */
+.user-name {
+  color: #b23561;
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.chevron {
+  transition: transform 0.25s ease;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+/* ---- Dropdown menu ---- */
+.user-dropdown {
+  position: absolute;
+  top: 115%;
+  right: 0;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid rgba(233, 30, 99, 0.2);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  z-index: 60;
+  overflow: hidden;
+  animation: fadeDown 0.25s ease forwards;
+}
+
+.user-dropdown a,
+.user-dropdown button {
+  text-align: left;
+  padding: 0.8rem 1rem;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #b23561;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+  text-decoration: none;
+}
+
+.user-dropdown a:hover,
+.user-dropdown button:hover {
+  background: #fde8f1;
+  color: #e91e63;
+}
+
+/* ---- Logout button in dropdown ---- */
+.logout-option {
+  color: #d94a7a;
+  font-weight: 600;
+}
+
+/* ---- Animation ---- */
+@keyframes fadeDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---- Mobile adjustments ---- */
+@media (max-width: 768px) {
+  .top-header {
+    top: 0.75rem;
+    right: 1rem;
+  }
+
+  .user-toggle,
+  .login-button {
+    padding: 0.45rem 0.9rem;
+    font-size: 0.9rem;
+  }
+
+  .user-dropdown {
+    min-width: 160px;
+    top: 110%;
+  }
+
+  .user-dropdown a,
+  .user-dropdown button {
+    padding: 0.7rem 0.9rem;
+    font-size: 0.9rem;
+  }
+}

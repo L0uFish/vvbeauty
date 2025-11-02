@@ -1,15 +1,23 @@
-import { supabase } from "@/lib/supabaseClient";
+import HeroCarousel from "./components/HeroCarousel";
+import ActionButtons from "./components/ActionButtons";
+import "./styles/home.css";
+import Header from "./components/Header";
 
-export default async function Home() {
-  // Fetch data server-side
-  const { data, error } = await supabase.from("services").select("*");
-
-  console.log("Supabase test:", data, error);
-
+export default function Home() {
   return (
-    <main className="p-6">
-      <h1 className="text-2xl font-bold mb-4">VVBeauty</h1>
-      <p>Check your console (server logs in terminal) for Supabase output.</p>
+    <main className="home-container">
+      <Header />
+      <section className="hero-section">
+        <HeroCarousel />
+        <div className="hero-overlay">
+          <h1 className="hero-title">VVBeauty</h1>
+          <p className="hero-subtitle">Nagels & Wimpers</p>
+        </div>
+      </section>
+
+      <section className="action-section">
+        <ActionButtons />
+      </section>
     </main>
   );
 }

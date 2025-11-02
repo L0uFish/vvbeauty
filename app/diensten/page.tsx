@@ -2,6 +2,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import DienstCard from "./DienstCard";
 import "./diensten.css";
+import HomeButton from "../components/HomeButton";
 
 export default async function Diensten() {
   // Fetch active services
@@ -37,6 +38,7 @@ export default async function Diensten() {
 
   return (
     <main>
+      <HomeButton />
       <div className="page-container">
         {Object.entries(grouped).map(([category, items]) => (
           <section key={category}>
