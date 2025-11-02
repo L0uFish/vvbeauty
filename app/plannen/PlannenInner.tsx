@@ -20,13 +20,19 @@ export default function PlannenInner() {
   const [message, setMessage] = useState<string | null>(null);
   const [session, setSession] = useState<any>(null);
   const [showLogin, setShowLogin] = useState(false);
+  const [showCompleteProfile, setShowCompleteProfile] = useState(false);
+  const [profileData, setProfileData] = useState({
+    email: "",
+    fullName: "",
+    tel: "",
+  });
 
   // 🔹 Fetch user session (detect if logged in)
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) =>
-      setSession(session)
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => setSession(session)
     );
 
     return () => listener.subscription.unsubscribe();
@@ -57,6 +63,33 @@ export default function PlannenInner() {
       return;
     }
 
+    // 🔹 Fetch user info to verify tel
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("email, full_name, tel")
+      .eq("id", session.user.id)
+      .maybeSingle();
+
+    if (userError) {
+      console.error("User fetch error:", userError);
+      return;
+    }
+
+    // 🔹 If tel missing, show the mini modal
+    if (!userData?.tel) {
+      setProfileData({
+        email: userData?.email || session.user.email || "",
+        fullName:
+          userData?.full_name ||
+          session.user.user_metadata?.full_name ||
+          "",
+        tel: "",
+      });
+      setShowCompleteProfile(true);
+      return;
+    }
+
+    // Otherwise, continue booking
     setSaving(true);
     setMessage(null);
 
@@ -79,7 +112,9 @@ export default function PlannenInner() {
         day: "numeric",
         month: "long",
       });
-      setMessage(`✅ Je afspraak is ingepland voor ${formattedDate} om ${selectedTime}.`);
+      setMessage(
+        `✅ Je afspraak is ingepland voor ${formattedDate} om ${selectedTime}.`
+      );
       setSelectedTime(null);
       setSelectedDate(null);
     }
@@ -139,7 +174,9 @@ export default function PlannenInner() {
               <>€{service.price}</>
             )}
           </div>
-          <div className="plannen-duration">{service.duration_minutes} min</div>
+          <div className="plannen-duration">
+            {service.duration_minutes} min
+          </div>
         </div>
 
         {/* Calendar */}
@@ -168,15 +205,89 @@ export default function PlannenInner() {
         {message && <p className="confirmation-message">{message}</p>}
       </div>
 
-      {/* Login Modal Overlay */}
+      {/* Login Modal */}
       <LoginModal
         open={showLogin}
         onClose={() => setShowLogin(false)}
         onLoginSuccess={() => {
           setShowLogin(false);
-          handleBooking(); // automatically re-try booking after login
+          handleBooking(); // retry booking after login
         }}
       />
+
+      {/* Mini modal for phone number */}
+      {showCompleteProfile && (
+        <div className="modal-overlay mini-blocker">
+          <div
+            className="mini-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Vul je gegevens aan</h3>
+            <p>We missen nog je telefoonnummer.</p>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+
+                // 🧹 Clean input
+                let cleaned = profileData.tel
+                  .trim()
+                  .replace(/\s+/g, "")
+                  .replace(/[^\d+]/g, "");
+
+                if (cleaned.startsWith("00")) {
+                  cleaned = "+" + cleaned.slice(2); // convert 0032 → +32
+                }
+
+                // ✅ Valid formats:
+                const valid =
+                  /^0\d{8,9}$/.test(cleaned) || /^\+32\d{8,9}$/.test(cleaned);
+
+                if (!valid) {
+                  alert(
+                    "Voer een geldig Belgisch telefoonnummer in (bv. 0468 57 46 14 of +32 468 57 46 14)."
+                  );
+                  return;
+                }
+
+                const { error } = await supabase
+                  .from("users")
+                  .update({ tel: cleaned })
+                  .eq("id", session.user.id);
+
+                if (error) {
+                  alert("Kon telefoonnummer niet opslaan.");
+                  console.error(error);
+                  return;
+                }
+
+                setShowCompleteProfile(false);
+                handleBooking(); // retry booking now that phone is saved
+              }}
+              className="mini-form"
+            >
+              <input type="text" value={profileData.fullName} disabled />
+              <input type="email" value={profileData.email} disabled />
+              <input
+                type="tel"
+                placeholder="Telefoonnummer"
+                value={profileData.tel}
+                onChange={(e) => {
+                  // Clean while typing
+                  const val = e.target.value
+                    .replace(/[^\d+]/g, "")
+                    .replace(/\s+/g, "");
+                  setProfileData({ ...profileData, tel: val });
+                }}
+                required
+                autoFocus
+              />
+              <button type="submit" className="mini-submit">
+                Opslaan en verdergaan
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
