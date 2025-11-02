@@ -14,6 +14,7 @@ export default function PlannenInner() {
 
   const [service, setService] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showSpinner, setShowSpinner] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -38,49 +39,54 @@ export default function PlannenInner() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // 🔹 Fetch service data
+  // 🔹 Delay spinner appearance to prevent quick flash
   useEffect(() => {
-  let active = true; // ✅ prevent state updates after unmount
+    const timer = setTimeout(() => setShowSpinner(true), 300);
+    return () => clearTimeout(timer);
+  }, []);
 
-  const fetchService = async () => {
-    if (!serviceId) {
-      setLoading(false);
-      return;
-    }
+  // 🔹 Fetch service data safely
+  useEffect(() => {
+    let active = true;
 
-    try {
-      const { data, error } = await supabase
-        .from("services")
-        .select("*")
-        .eq("id", serviceId)
-        .single();
-
-      if (!active) return;
-
-      if (error) {
-        console.error("Supabase fetch error:", error);
-        setService(null);
-      } else if (!data) {
-        console.warn("No data returned for serviceId:", serviceId);
-        setService(null);
-      } else {
-        setService(data);
+    const fetchService = async () => {
+      if (!serviceId) {
+        setLoading(false);
+        return;
       }
-    } catch (err) {
-      console.error("Unexpected fetch error:", err);
-      if (active) setService(null);
-    } finally {
-      if (active) setLoading(false);
-    }
-  };
 
-  fetchService();
+      try {
+        const { data, error } = await supabase
+          .from("services")
+          .select("*")
+          .eq("id", serviceId)
+          .single();
 
-  // Cleanup to avoid async leaks
-  return () => {
-    active = false;
-  };
-}, [serviceId]);
+        if (!active) return;
+
+        if (error) {
+          console.error("Supabase fetch error:", error);
+          setService(null);
+        } else if (!data) {
+          console.warn("No data returned for serviceId:", serviceId);
+          setService(null);
+        } else {
+          setService(data);
+        }
+      } catch (err) {
+        console.error("Unexpected fetch error:", err);
+        if (active) setService(null);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    fetchService();
+
+    return () => {
+      active = false;
+    };
+  }, [serviceId]);
 
   // 🔹 Handle new appointment
   const handleBooking = async () => {
@@ -165,7 +171,7 @@ export default function PlannenInner() {
     );
   }
 
-  if (loading) {
+  if (loading && showSpinner) {
     return (
       <main className="plannen-container">
         <div className="plannen-card">
@@ -243,80 +249,6 @@ export default function PlannenInner() {
           handleBooking(); // retry booking after login
         }}
       />
-
-      {/* Mini modal for phone number */}
-      {showCompleteProfile && (
-        <div className="modal-overlay mini-blocker">
-          <div
-            className="mini-modal-content"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3>Vul je gegevens aan</h3>
-            <p>We missen nog je telefoonnummer.</p>
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-
-                // 🧹 Clean input
-                let cleaned = profileData.tel
-                  .trim()
-                  .replace(/\s+/g, "")
-                  .replace(/[^\d+]/g, "");
-
-                if (cleaned.startsWith("00")) {
-                  cleaned = "+" + cleaned.slice(2); // convert 0032 → +32
-                }
-
-                // ✅ Valid formats:
-                const valid =
-                  /^0\d{8,9}$/.test(cleaned) || /^\+32\d{8,9}$/.test(cleaned);
-
-                if (!valid) {
-                  alert(
-                    "Voer een geldig Belgisch telefoonnummer in (bv. 0468 57 46 14 of +32 468 57 46 14)."
-                  );
-                  return;
-                }
-
-                const { error } = await supabase
-                  .from("users")
-                  .update({ tel: cleaned })
-                  .eq("id", session.user.id);
-
-                if (error) {
-                  alert("Kon telefoonnummer niet opslaan.");
-                  console.error(error);
-                  return;
-                }
-
-                setShowCompleteProfile(false);
-                handleBooking(); // retry booking now that phone is saved
-              }}
-              className="mini-form"
-            >
-              <input type="text" value={profileData.fullName} disabled />
-              <input type="email" value={profileData.email} disabled />
-              <input
-                type="tel"
-                placeholder="Telefoonnummer"
-                value={profileData.tel}
-                onChange={(e) => {
-                  // Clean while typing
-                  const val = e.target.value
-                    .replace(/[^\d+]/g, "")
-                    .replace(/\s+/g, "");
-                  setProfileData({ ...profileData, tel: val });
-                }}
-                required
-                autoFocus
-              />
-              <button type="submit" className="mini-submit">
-                Opslaan en verdergaan
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-    </main>
+  </main>
   );
 }
