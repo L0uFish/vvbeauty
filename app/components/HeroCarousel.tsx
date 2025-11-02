@@ -1,17 +1,33 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import "../styles/HeroCarousel.css";
 
-const mockImages = Array.from({ length: 12 }).map(
-  (_, i) => `https://picsum.photos/seed/vvbeauty${i}/400/400`
-);
+// Utility: shuffle an array
+const shuffleArray = (array: string[]) => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
 
 export default function HeroCarousel() {
   const trackRef = useRef<HTMLDivElement>(null);
+  const [images, setImages] = useState<string[]>([]);
 
+  // === Load and shuffle images once ===
+  useEffect(() => {
+    // ✅ Correct public path
+    const imported = Array.from({ length: 26 }, (_, i) => `/carousel_pictures/${i + 1}.jpg`);
+    setImages(shuffleArray(imported));
+  }, []);
+
+  // === Animate horizontal scroll ===
   useEffect(() => {
     const track = trackRef.current;
-    if (!track) return;
+    if (!track || images.length === 0) return;
 
     let offset = 0;
     let rafId: number;
@@ -25,12 +41,15 @@ export default function HeroCarousel() {
 
     rafId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafId);
-  }, []);
+  }, [images]);
+
+  // === Render ===
+  if (images.length === 0) return null;
 
   return (
     <div className="carousel-container">
       <div className="carousel-track" ref={trackRef}>
-        {[...mockImages, ...mockImages].map((img, i) => (
+        {[...images, ...images].map((img, i) => (
           <div className="carousel-frame" key={i}>
             <img src={img} alt={`VVBeauty ${i + 1}`} />
           </div>

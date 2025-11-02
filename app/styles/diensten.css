@@ -1,0 +1,159 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap");
+
+/* --- Base layout --- */
+.boeking-container {
+  font-family: "Inter", system-ui, sans-serif;
+  background:
+    linear-gradient(180deg, #fde8f1 0%, #fbeef3 100%),
+    url("https://www.transparenttextures.com/patterns/marble.png");
+  background-repeat: repeat;
+  background-size: cover;
+  background-attachment: fixed;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto; /* ✅ allows scrolling */
+}
+
+/* ---- Sections ---- */
+.page-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 3rem 0 5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 5rem;
+  flex: 1;
+}
+
+section {
+  padding: 0 2rem;
+}
+
+section h2 {
+  font-family: "Playfair Display", serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #b23561;
+  margin: 0 0 1.5rem;
+  padding-left: 0.25rem;
+  border-left: 4px solid #e88aab;
+}
+
+/* ---- Service boxes ---- */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.service-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  width: 100%;
+  padding: 1.5rem 2rem;
+  border: 1px solid rgba(255, 192, 203, 0.4);
+  border-radius: 0;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1rem;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  box-sizing: border-box;
+  opacity: 0;
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.service-box:nth-child(1) { animation-delay: 0.1s; }
+.service-box:nth-child(2) { animation-delay: 0.2s; }
+.service-box:nth-child(3) { animation-delay: 0.3s; }
+.service-box:nth-child(4) { animation-delay: 0.4s; }
+.service-box:nth-child(5) { animation-delay: 0.5s; }
+
+.service-box:hover {
+  background: #fff7fa;
+  border-color: #e88aab;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(233, 30, 99, 0.1);
+}
+
+.service-info {
+  flex: 1;
+}
+
+.service-name {
+  font-family: "Playfair Display", serif;
+  font-weight: 600;
+  color: #b23561;
+  font-size: 1.2rem;
+  margin-bottom: 0.25rem;
+}
+
+.service-desc {
+  color: #555;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.service-price {
+  font-weight: 600;
+  color: #e91e63;
+  font-size: 1rem;
+  white-space: nowrap;
+  margin-left: 2rem;
+}
+
+.service-price .old {
+  text-decoration: line-through;
+  color: #999;
+  margin-right: 0.4rem;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .hero-section {
+    height: 38vh;
+  }
+
+  section {
+    padding: 0 1rem;
+  }
+
+  .service-box {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.25rem;
+  }
+
+  .service-price {
+    margin-top: 0.5rem;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  section h2 {
+    font-size: 1.4rem;
+  }
+
+  .service-name {
+    font-size: 1.05rem;
+  }
+
+  .service-desc {
+    font-size: 0.85rem;
+  }
+}
+
+html,
+body {
+  overflow-y: auto !important;
+  height: auto !important;
+}
