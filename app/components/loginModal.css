@@ -1,3 +1,6 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap");
+
+/* --- Overlay --- */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -11,25 +14,23 @@
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
+/* --- Modal Container --- */
 .modal-content {
   position: relative;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.85);
   border-radius: 1.25rem;
   padding: 2rem;
-  box-shadow: 0 8px 32px rgba(233, 30, 99, 0.15);
-  border: 1px solid rgba(255, 192, 203, 0.4);
-  backdrop-filter: blur(8px);
   width: 100%;
   max-width: 420px;
+  box-shadow: 0 4px 16px rgba(233, 30, 99, 0.1);
+  border: 1px solid rgba(255, 192, 203, 0.3);
+  backdrop-filter: blur(8px);
   animation: slideIn 0.3s ease;
+  font-family: "Inter", sans-serif;
 }
 
 @keyframes slideIn {
@@ -43,27 +44,157 @@
   }
 }
 
+/* --- Close Button --- */
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 182, 193, 0.4);
+  background: rgba(255, 255, 255, 0.8);
+  color: #b23561;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(233, 30, 99, 0.08);
+}
+.modal-close:hover {
+  background: linear-gradient(145deg, #e91e63, #f7cfdc);
+  color: white;
+  transform: rotate(90deg);
+}
+
+/* --- Title --- */
 .modal-title {
   font-family: "Playfair Display", serif;
   color: #b23561;
   text-align: center;
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
 }
 
-.modal-close {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
+/* --- Social Buttons Wrapper --- */
+.socials {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+/* --- Custom Social Buttons --- */
+.social-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1rem;
   border: none;
-  font-size: 1.25rem;
-  color: #b23561;
+  border-radius: 0.75rem;
   cursor: pointer;
+  color: white;
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  background: linear-gradient(90deg, #e91e63, #f7cfdc);
+  box-shadow: 0 3px 10px rgba(233, 30, 99, 0.1);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.social-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(233, 30, 99, 0.2);
+}
+
+/* Optional: blue gradient for Facebook if you prefer brand colours */
+/* .social-facebook {
+  background: linear-gradient(90deg, #4267B2, #7a9ff1);
+}
+.social-facebook:hover {
+  box-shadow: 0 6px 18px rgba(66, 103, 178, 0.25);
+} */
+
+/* --- Social Button Icons --- */
+.social-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.social-icon.google {
+  background-image: url("https://www.svgrepo.com/show/475656/google-color.svg");
+}
+.social-icon.facebook {
+  background-image: url("https://www.svgrepo.com/show/452196/facebook-1.svg");
+}
+
+/* --- Input Fields --- */
+.modal-content input[type="email"],
+.modal-content input[type="password"],
+.modal-content input[type="text"],
+.modal-content input[type="tel"] {
+  width: 90%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 182, 193, 0.4);
+  border-radius: 0.75rem;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+  font-family: "Inter", sans-serif;
+  font-size: 0.95rem;
+  color: #333;
+  outline: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(233, 30, 99, 0.05);
+}
+.modal-content input:focus {
+  border-color: #e91e63;
+  box-shadow: 0 3px 10px rgba(233, 30, 99, 0.1);
+}
+
+/* --- Submit Button --- */
+.modal-content button[type="submit"] {
+  width: 100%;
+  background: linear-gradient(90deg, #e91e63, #f7cfdc);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 10px rgba(233, 30, 99, 0.1);
+}
+.modal-content button[type="submit"]:hover {
+  background: linear-gradient(90deg, #d94a7a, #e91e63);
+  transform: translateY(-2px);
+}
+
+/* --- Footer Links --- */
+.modal-footer {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+.modal-footer a {
+  color: #b23561;
+  font-weight: 500;
+  text-decoration: none;
   transition: color 0.2s ease;
 }
-
-.modal-close:hover {
+.modal-footer a:hover {
   color: #e91e63;
 }
 
+.divider {
+  font-family: "Playfair Display", serif;
+  color: #b23561;
+}
