@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 import HeroCarousel from "../components/HeroCarousel";
 import Header from "../components/Header";
 import HomeButton from "../components/HomeButton";
+import { setMultipleServices } from "@/lib/serviceCache"; // ✅ added
 import "../styles/diensten.css";
 
 export default async function Boeking() {
@@ -13,6 +14,9 @@ export default async function Boeking() {
     .order("display_order");
 
   if (error || !services) return <main>Fout bij laden van diensten.</main>;
+
+  // ✅ Cache all services for instant reuse on /plannen
+  setMultipleServices(services);
 
   const grouped = services.reduce((acc: Record<string, any[]>, s) => {
     acc[s.category] = acc[s.category] || [];

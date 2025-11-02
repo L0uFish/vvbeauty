@@ -1,8 +1,9 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { getServiceFromCache, setServiceInCache } from "@/lib/serviceCache"; // ✅ NEW
 import Calendar from "./Calendar";
 import Timeslots from "./Timeslots";
 import LoginModal from "@/app/components/LoginModal";
@@ -10,50 +11,57 @@ import "./plannen.css";
 
 export default function PlannenInner() {
   const searchParams = useSearchParams();
-  const serviceId = searchParams.get("service");
+
+  // ✅ Detect actual query changes (works with back/forward)
+  const serviceId = useMemo(() => {
+    const id = searchParams?.get("service");
+    return id && id.trim() !== "" ? id : null;
+  }, [searchParams.toString()]);
 
   const [service, setService] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [showSpinner, setShowSpinner] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [session, setSession] = useState<any>(null);
   const [showLogin, setShowLogin] = useState(false);
-
-  // 🧩 NEW: mini modal for missing phone
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [phone, setPhone] = useState("");
 
-  // 🔹 Fetch user session (detect if logged in)
+  // 🔹 Detect login state
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
-
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => setSession(session)
     );
-
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // 🔹 Delay spinner appearance to prevent quick flash
+  // 🔹 Fetch service data when serviceId changes (with cache support)
   useEffect(() => {
-    const timer = setTimeout(() => setShowSpinner(true), 300);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!serviceId) return;
 
-  // 🔹 Fetch service data safely
-  useEffect(() => {
     let active = true;
+    setLoading(true);
+    setService(null);
+    setSelectedDate(null);
+    setSelectedTime(null);
+    setMessage(null);
 
+    // ✅ Try cache first
+    const cached = getServiceFromCache(serviceId);
+    if (cached) {
+      console.log("✅ Loaded service from cache:", serviceId);
+      setService(cached);
+      setLoading(false);
+      return;
+    }
+
+    // 🔄 Otherwise, fetch from Supabase
     const fetchService = async () => {
-      if (!serviceId) {
-        setLoading(false);
-        return;
-      }
-
       try {
+        console.log("🔄 Fetching service from Supabase:", serviceId);
         const { data, error } = await supabase
           .from("services")
           .select("*")
@@ -67,6 +75,7 @@ export default function PlannenInner() {
           setService(null);
         } else {
           setService(data);
+          setServiceInCache(data); // ✅ save in cache for future loads
         }
       } catch (err) {
         console.error("Unexpected fetch error:", err);
@@ -77,23 +86,20 @@ export default function PlannenInner() {
     };
 
     fetchService();
-
     return () => {
       active = false;
     };
   }, [serviceId]);
 
-  // 🔹 Handle new appointment
+  // 🔹 Handle booking
   const handleBooking = async () => {
     if (!selectedDate || !selectedTime || !service) return;
 
-    // Require login before continuing
     if (!session) {
       setShowLogin(true);
       return;
     }
 
-    // 🔹 Check user phone before booking
     const { data: userData, error: userError } = await supabase
       .from("users")
       .select("tel")
@@ -106,12 +112,10 @@ export default function PlannenInner() {
     }
 
     if (!userData?.tel) {
-      // no phone → show modal
       setShowPhoneModal(true);
       return;
     }
 
-    // continue booking
     setSaving(true);
     setMessage(null);
 
@@ -175,8 +179,18 @@ export default function PlannenInner() {
     }
   };
 
-  // 🔹 Loading / fallback states
-  if (!serviceId) {
+  // 🔹 Fallback states
+  if (loading) {
+    return (
+      <main className="plannen-container">
+        <div className="plannen-card">
+          <p className="plannen-description">Dienst wordt geladen...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!serviceId && !loading) {
     return (
       <main className="plannen-container">
         <div className="plannen-card">
@@ -184,16 +198,6 @@ export default function PlannenInner() {
           <p className="plannen-description">
             Gelieve eerst een dienst te kiezen via de Diensten-pagina.
           </p>
-        </div>
-      </main>
-    );
-  }
-
-  if (loading && showSpinner) {
-    return (
-      <main className="plannen-container">
-        <div className="plannen-card">
-          <p className="plannen-description">Dienst wordt geladen...</p>
         </div>
       </main>
     );
@@ -267,8 +271,14 @@ export default function PlannenInner() {
 
       {/* Phone completion mini modal */}
       {showPhoneModal && (
-        <div className="modal-overlay mini-blocker" onClick={() => setShowPhoneModal(false)}>
-          <div className="mini-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-overlay mini-blocker"
+          onClick={() => setShowPhoneModal(false)}
+        >
+          <div
+            className="mini-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3>Vul je telefoonnummer in</h3>
             <p>We hebben je nummer nodig om de afspraak te bevestigen.</p>
             <form onSubmit={handleSavePhone} className="mini-form">
@@ -280,7 +290,9 @@ export default function PlannenInner() {
                 required
                 autoFocus
               />
-              <button type="submit" className="mini-submit">Opslaan</button>
+              <button type="submit" className="mini-submit">
+                Opslaan
+              </button>
             </form>
           </div>
         </div>
