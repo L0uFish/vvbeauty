@@ -152,8 +152,3 @@ section h2 {
   }
 }
 
-html,
-body {
-  overflow-y: auto !important;
-  height: auto !important;
-}

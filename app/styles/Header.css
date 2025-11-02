@@ -108,32 +108,42 @@
   animation: fadeDown 0.25s ease forwards;
 }
 
+/* Unified dropdown links & buttons */
 .user-dropdown a,
 .user-dropdown button {
   text-align: left;
-  padding: 0.8rem 1rem;
+  padding: 0.85rem 1rem;
   background: transparent;
   border: none;
   outline: none;
-  color: #b23561;
+  color: #b23561; /* same tone as header text */
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 600; /* 👈 match “Uitloggen” */
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background 0.25s ease, color 0.25s ease;
   text-decoration: none;
+  letter-spacing: 0.2px;
 }
 
+/* Hover state — soft pink background */
 .user-dropdown a:hover,
 .user-dropdown button:hover {
   background: #fde8f1;
   color: #e91e63;
 }
 
-/* ---- Logout button in dropdown ---- */
+/* ---- Logout button ---- */
 .logout-option {
-  color: #d94a7a;
+  color: #e35d7c; /* slightly warmer pink/red */
   font-weight: 600;
 }
+
+/* Hover on logout stays consistent */
+.logout-option:hover {
+  background: #fde8f1;
+  color: #b23561;
+}
+
 
 /* ---- Animation ---- */
 @keyframes fadeDown {

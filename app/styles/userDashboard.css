@@ -1,0 +1,180 @@
+/* === GENERAL LAYOUT === */
+.user-dashboard {
+  background: linear-gradient(180deg, #fde8f1 0%, #fbeef3 100%);
+  min-height: 100vh;
+  padding: 3rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: "Inter", sans-serif;
+}
+
+/* === INFO + BOOKINGS SECTIONS === */
+.user-info,
+.user-bookings {
+  background: #fff;
+  border: 1px solid rgba(255, 192, 203, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-radius: 0;
+  width: 90%;
+  max-width: 900px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  animation: slideUp 0.6s ease both;
+}
+
+.user-info h2,
+.user-bookings h2 {
+  font-family: "Playfair Display", serif;
+  color: #b23561;
+  margin-bottom: 1rem;
+  font-size: 1.7rem;
+}
+
+/* === USER DETAILS === */
+.user-details p {
+  margin: 0.25rem 0;
+  color: #444;
+  line-height: 1.4;
+}
+
+.user-info-actions {
+  margin-top: 1.5rem;
+  text-align: right;
+}
+
+/* === UNIVERSAL BUTTON BASE === */
+.cancel-btn,
+.rebook-btn,
+.edit-btn,
+.show-more-btn {
+  border: none;
+  border-radius: 9999px;
+  padding: 0.5rem 1.1rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+/* === BUTTON COLORS === */
+.cancel-btn {
+  background: #ffe0e0;
+  color: #b23561;
+}
+.cancel-btn:hover {
+  background: #f8c7c7;
+}
+
+.rebook-btn,
+.edit-btn,
+.show-more-btn {
+  background: #e88aab;
+  color: #fff;
+}
+.rebook-btn:hover,
+.edit-btn:hover,
+.show-more-btn:hover {
+  background: #b23561;
+}
+
+/* === BOOKINGS === */
+.booking-card {
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 1rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  animation: slideUp 0.6s ease both;
+}
+
+.booking-card:first-of-type {
+  border-top: none;
+}
+
+.booking-info h3 {
+  color: #b23561;
+  margin-bottom: 0.2rem;
+  font-size: 1.1rem;
+}
+
+.booking-info p {
+  color: #555;
+  font-size: 0.95rem;
+  margin: 0.1rem 0;
+}
+
+.booking-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+/* === CANCELLED LOOK === */
+.booking-card.cancelled {
+  opacity: 0.6;
+  background: #fafafa;
+  border-left: 4px solid #ddd;
+  border-radius: 4px;
+  padding-left: 1rem;
+}
+
+.booking-card.cancelled .booking-info h3,
+.booking-card.cancelled .booking-info p {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.booking-card.cancelled .booking-actions {
+  display: none;
+}
+
+/* === SHOW MORE CONTAINER === */
+.show-more-container {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+/* === ANIMATIONS === */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .user-info,
+  .user-bookings {
+    width: 95%;
+    padding: 1.5rem;
+  }
+
+  .booking-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .booking-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .cancel-btn,
+  .rebook-btn,
+  .edit-btn,
+  .show-more-btn {
+    font-size: 0.9rem;
+    padding: 0.55rem 1rem;
+  }
+}

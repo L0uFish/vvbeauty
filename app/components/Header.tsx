@@ -87,8 +87,7 @@ export default function Header() {
 
                 {dropdownOpen && (
                   <div className="user-dropdown">
-                    <a href="/profiel">Mijn gegevens</a>
-                    <a href="/afspraken">Mijn afspraken</a>
+                    <a href="/profile">Mijn gegevens</a>
                     <button
                       className="logout-option"
                       type="button"
