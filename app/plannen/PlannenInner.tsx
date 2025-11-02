@@ -40,18 +40,47 @@ export default function PlannenInner() {
 
   // 🔹 Fetch service data
   useEffect(() => {
-    if (!serviceId) return;
-    const fetchService = async () => {
+  let active = true; // ✅ prevent state updates after unmount
+
+  const fetchService = async () => {
+    if (!serviceId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
       const { data, error } = await supabase
         .from("services")
         .select("*")
         .eq("id", serviceId)
         .single();
-      if (!error) setService(data);
-      setLoading(false);
-    };
-    fetchService();
-  }, [serviceId]);
+
+      if (!active) return;
+
+      if (error) {
+        console.error("Supabase fetch error:", error);
+        setService(null);
+      } else if (!data) {
+        console.warn("No data returned for serviceId:", serviceId);
+        setService(null);
+      } else {
+        setService(data);
+      }
+    } catch (err) {
+      console.error("Unexpected fetch error:", err);
+      if (active) setService(null);
+    } finally {
+      if (active) setLoading(false);
+    }
+  };
+
+  fetchService();
+
+  // Cleanup to avoid async leaks
+  return () => {
+    active = false;
+  };
+}, [serviceId]);
 
   // 🔹 Handle new appointment
   const handleBooking = async () => {

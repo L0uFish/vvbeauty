@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { useUser } from "../context/UserContext";
 import "../styles/userDashboard.css";
 import ProfileEditModal from "../components/ProfileEditModal";
+import Header from "../components/Header";
+import HomeButton from "../components/HomeButton";
 
 export default function Profiel() {
   const { user, loading } = useUser();
@@ -88,6 +90,8 @@ export default function Profiel() {
 
   return (
     <main className="user-dashboard">
+      <Header />
+      <HomeButton />
       {/* === USER INFO === */}
       <section className="user-info">
         <h2>Mijn Gegevens</h2>
