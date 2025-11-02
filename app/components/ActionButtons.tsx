@@ -8,7 +8,7 @@ export default function ActionButtons() {
         <h3>Boek je Afspraak</h3>
       </Link>
 
-      <Link href="/prijzen" className="action-button">
+      <Link href="/prijslijst" className="action-button">
         <h3>Diensten & Prijzen</h3>
       </Link>
 
