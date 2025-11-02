@@ -19,7 +19,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Re-fetch the current user/session
+  // ✅ Re-fetch the current user/session
   const refreshUser = async () => {
     try {
       const {
@@ -30,6 +30,20 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
 
       setUser(session?.user || null);
+
+      // ✅ Restore pending booking if one exists
+      if (session?.user) {
+        const pending = localStorage.getItem("pendingBooking");
+        if (pending) {
+          try {
+            const { serviceId, selectedDate, selectedTime } = JSON.parse(pending);
+            localStorage.removeItem("pendingBooking");
+            window.location.href = `/plannen?service=${serviceId}&date=${selectedDate}&time=${selectedTime}`;
+          } catch (e) {
+            console.error("Error restoring pending booking:", e);
+          }
+        }
+      }
     } catch (err) {
       console.error("Error refreshing user:", err);
       setUser(null);
@@ -41,7 +55,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // Initial fetch on mount
     const initUser = async () => {
       try {
         const {
@@ -51,6 +64,20 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         if (mounted) {
           setUser(session?.user || null);
           setLoading(false);
+        }
+
+        // ✅ Same restore logic on initial mount
+        if (session?.user) {
+          const pending = localStorage.getItem("pendingBooking");
+          if (pending) {
+            try {
+              const { serviceId, selectedDate, selectedTime } = JSON.parse(pending);
+              localStorage.removeItem("pendingBooking");
+              window.location.href = `/plannen?service=${serviceId}&date=${selectedDate}&time=${selectedTime}`;
+            } catch (e) {
+              console.error("Error restoring pending booking:", e);
+            }
+          }
         }
       } catch (err) {
         console.error("Error fetching session:", err);
@@ -67,6 +94,20 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       if (mounted) {
         setUser(session?.user || null);
         setLoading(false);
+      }
+
+      // ✅ Also handle restore here after OAuth redirects
+      if (session?.user) {
+        const pending = localStorage.getItem("pendingBooking");
+        if (pending) {
+          try {
+            const { serviceId, selectedDate, selectedTime } = JSON.parse(pending);
+            localStorage.removeItem("pendingBooking");
+            window.location.href = `/plannen?service=${serviceId}&date=${selectedDate}&time=${selectedTime}`;
+          } catch (e) {
+            console.error("Error restoring pending booking:", e);
+          }
+        }
       }
     });
 

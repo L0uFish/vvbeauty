@@ -9,7 +9,7 @@ import Header from "../components/Header";
 import HomeButton from "../components/HomeButton";
 
 export default function Profiel() {
-  const { user, loading } = useUser();
+  const { user, loading, refreshUser } = useUser();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [userInfo, setUserInfo] = useState<any>(null);
   const [loadingData, setLoadingData] = useState(true);
@@ -22,27 +22,35 @@ export default function Profiel() {
   }, [user]);
 
   const fetchUserData = async () => {
-    const { data: profile } = await supabase
-      .from("users")
-      .select("full_name, email, tel")
-      .eq("id", user.id)
-      .single();
-    setUserInfo(profile);
+    try {
+      const { data: profile, error: profileErr } = await supabase
+        .from("users")
+        .select("full_name, email, tel")
+        .eq("id", user.id)
+        .single();
+      if (profileErr) throw profileErr;
+      setUserInfo(profile);
 
-    const { data: appts } = await supabase
-      .from("appointments")
-      .select(`
-        id,
-        date,
-        time,
-        status,
-        services:service_id(id, name, price)
-      `)
-      .eq("user_id", user.id)
-      .order("date", { ascending: false });
+      const { data: appts, error: apptErr } = await supabase
+        .from("appointments")
+        .select(`
+          id,
+          date,
+          time,
+          status,
+          services:service_id(id, name, price)
+        `)
+        .eq("user_id", user.id)
+        .order("date", { ascending: false });
 
-    setAppointments(appts || []);
-    setLoadingData(false);
+      if (apptErr) throw apptErr;
+
+      setAppointments(appts || []);
+    } catch (err) {
+      console.error("Error loading profile:", err);
+    } finally {
+      setLoadingData(false);
+    }
   };
 
   const handleCancel = async (id: string) => {
@@ -69,6 +77,7 @@ export default function Profiel() {
     return (
       <main className="user-dashboard">
         <p>Je bent niet ingelogd.</p>
+        <HomeButton />
       </main>
     );
 
@@ -110,7 +119,10 @@ export default function Profiel() {
         <ProfileEditModal
           open={openEdit}
           onClose={() => setOpenEdit(false)}
-          onUpdated={() => fetchUserData()}
+          onUpdated={() => {
+            fetchUserData();
+            refreshUser(); // 👈 optional if you want to sync global user data
+          }}
           initialData={userInfo}
         />
       </section>

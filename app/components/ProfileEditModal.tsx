@@ -46,64 +46,73 @@ export default function ProfileEditModal({
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg(null);
-    setSuccessMsg(null);
-    setLoading(true);
+  e.preventDefault();
+  setErrorMsg(null);
+  setSuccessMsg(null);
+  setLoading(true);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (!user) {
-      setErrorMsg("Geen actieve gebruiker gevonden.");
-      setLoading(false);
-      return;
-    }
+  if (!user) {
+    setErrorMsg("Geen actieve gebruiker gevonden.");
+    setLoading(false);
+    return;
+  }
 
-    const cleanedPhone = cleanAndValidatePhone(phone);
-    if (!cleanedPhone) {
-      setErrorMsg(
-        "Voer een geldig Belgisch telefoonnummer in (bv. 0468 57 46 14 of +32 468 57 46 14)."
-      );
-      setLoading(false);
-      return;
-    }
+  const cleanedPhone = cleanAndValidatePhone(phone);
+  if (!cleanedPhone) {
+    setErrorMsg(
+      "Voer een geldig Belgisch telefoonnummer in (bv. 0468 57 46 14 of +32 468 57 46 14)."
+    );
+    setLoading(false);
+    return;
+  }
 
-    try {
-      // 1️⃣ Update in users table
-      const { error: tableError } = await supabase
-        .from("users")
-        .update({
-          full_name: fullName,
-          email,
-          tel: cleanedPhone,
-        })
-        .eq("id", user.id);
-
-      if (tableError) throw tableError;
-
-      // 2️⃣ Update in Supabase auth metadata (optional)
-      const { error: metaError } = await supabase.auth.updateUser({
+  try {
+    // 1️⃣ Update in users table
+    const { error: tableError } = await supabase
+      .from("users")
+      .update({
+        full_name: fullName,
         email,
-        data: { full_name: fullName, tel: cleanedPhone },
-      });
+        tel: cleanedPhone,
+      })
+      .eq("id", user.id);
 
-      if (metaError) throw metaError;
+    if (tableError) throw tableError;
 
-      setSuccessMsg("Je gegevens zijn succesvol bijgewerkt!");
-      onUpdated?.();
-
-      setTimeout(() => {
-        onClose();
-      }, 1500);
-    } catch (err: any) {
-      console.error("Error updating profile:", err);
-      setErrorMsg("Er ging iets mis bij het opslaan. Probeer opnieuw.");
-    } finally {
-      setLoading(false);
+    // 2️⃣ Update in Supabase auth metadata (only if changed)
+    const updates: any = {};
+    if (email !== user.email) updates.email = email;
+    if (fullName !== user.user_metadata?.full_name) {
+      updates.data = { ...(updates.data || {}), full_name: fullName };
     }
-  };
+    if (cleanedPhone !== user.user_metadata?.tel) {
+      updates.data = { ...(updates.data || {}), tel: cleanedPhone };
+    }
+
+    if (Object.keys(updates).length > 0) {
+      const { error: metaError } = await supabase.auth.updateUser(updates);
+      if (metaError) throw metaError;
+    }
+
+    setSuccessMsg("Je gegevens zijn succesvol bijgewerkt!");
+    onUpdated?.();
+
+    setTimeout(() => {
+      setSuccessMsg(null);
+      onClose();
+    }, 1000);
+  } catch (err: any) {
+    console.error("Error updating profile:", err);
+    setErrorMsg("Er ging iets mis bij het opslaan. Probeer opnieuw.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const modalContent = (
     <div className="modal-overlay" onClick={onClose}>
