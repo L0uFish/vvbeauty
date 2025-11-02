@@ -21,12 +21,10 @@ export default function PlannenInner() {
   const [message, setMessage] = useState<string | null>(null);
   const [session, setSession] = useState<any>(null);
   const [showLogin, setShowLogin] = useState(false);
-  const [showCompleteProfile, setShowCompleteProfile] = useState(false);
-  const [profileData, setProfileData] = useState({
-    email: "",
-    fullName: "",
-    tel: "",
-  });
+
+  // 🧩 NEW: mini modal for missing phone
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [phone, setPhone] = useState("");
 
   // 🔹 Fetch user session (detect if logged in)
   useEffect(() => {
@@ -67,9 +65,6 @@ export default function PlannenInner() {
         if (error) {
           console.error("Supabase fetch error:", error);
           setService(null);
-        } else if (!data) {
-          console.warn("No data returned for serviceId:", serviceId);
-          setService(null);
         } else {
           setService(data);
         }
@@ -98,33 +93,25 @@ export default function PlannenInner() {
       return;
     }
 
-    // 🔹 Fetch user info to verify tel
+    // 🔹 Check user phone before booking
     const { data: userData, error: userError } = await supabase
       .from("users")
-      .select("email, full_name, tel")
+      .select("tel")
       .eq("id", session.user.id)
       .maybeSingle();
 
     if (userError) {
-      console.error("User fetch error:", userError);
+      console.error("Error fetching user:", userError);
       return;
     }
 
-    // 🔹 If tel missing, show the mini modal
     if (!userData?.tel) {
-      setProfileData({
-        email: userData?.email || session.user.email || "",
-        fullName:
-          userData?.full_name ||
-          session.user.user_metadata?.full_name ||
-          "",
-        tel: "",
-      });
-      setShowCompleteProfile(true);
+      // no phone → show modal
+      setShowPhoneModal(true);
       return;
     }
 
-    // Otherwise, continue booking
+    // continue booking
     setSaving(true);
     setMessage(null);
 
@@ -155,6 +142,37 @@ export default function PlannenInner() {
     }
 
     setSaving(false);
+  };
+
+  // 🔹 Save phone number & retry booking
+  const handleSavePhone = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    let cleaned = phone.trim().replace(/\s+/g, "").replace(/[^\d+]/g, "");
+    if (cleaned.startsWith("00")) cleaned = "+" + cleaned.slice(2);
+    const valid =
+      /^0\d{8,9}$/.test(cleaned) || /^\+32\d{8,9}$/.test(cleaned);
+
+    if (!valid) {
+      alert(
+        "Voer een geldig Belgisch telefoonnummer in (bv. 0468 57 46 14 of +32 468 57 46 14)."
+      );
+      return;
+    }
+
+    try {
+      await supabase
+        .from("users")
+        .update({ tel: cleaned })
+        .eq("id", session.user.id);
+
+      setShowPhoneModal(false);
+      setPhone("");
+      handleBooking(); // retry
+    } catch (err) {
+      console.error("Error updating tel:", err);
+      alert("Kon telefoonnummer niet opslaan.");
+    }
   };
 
   // 🔹 Loading / fallback states
@@ -214,10 +232,8 @@ export default function PlannenInner() {
           </div>
         </div>
 
-        {/* Calendar */}
         <Calendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
 
-        {/* Timeslots */}
         {selectedDate && (
           <Timeslots
             selectedTime={selectedTime}
@@ -225,7 +241,6 @@ export default function PlannenInner() {
           />
         )}
 
-        {/* Confirm Button */}
         <button
           type="button"
           disabled={!selectedDate || !selectedTime || saving}
@@ -249,6 +264,27 @@ export default function PlannenInner() {
           handleBooking(); // retry booking after login
         }}
       />
-  </main>
+
+      {/* Phone completion mini modal */}
+      {showPhoneModal && (
+        <div className="modal-overlay mini-blocker" onClick={() => setShowPhoneModal(false)}>
+          <div className="mini-modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Vul je telefoonnummer in</h3>
+            <p>We hebben je nummer nodig om de afspraak te bevestigen.</p>
+            <form onSubmit={handleSavePhone} className="mini-form">
+              <input
+                type="tel"
+                placeholder="Telefoonnummer"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+                autoFocus
+              />
+              <button type="submit" className="mini-submit">Opslaan</button>
+            </form>
+          </div>
+        </div>
+      )}
+    </main>
   );
 }

@@ -23,7 +23,7 @@ export default function LoginModal({
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Mini modal (for OAuth only)
+  // Mini modal (for OAuth + Email users missing phone)
   const [showMiniModal, setShowMiniModal] = useState(false);
   const [miniData, setMiniData] = useState({
     email: "",
@@ -44,21 +44,16 @@ export default function LoginModal({
         if (!session) return;
 
         try {
-          // Ensure user exists
           await supabase.rpc("add_user_if_missing");
 
-          // Fetch user record
           const { data: userData } = await supabase
             .from("users")
             .select("email, full_name, tel")
             .eq("id", session.user.id)
             .maybeSingle();
 
-          // If OAuth login and tel missing → show mini modal
-          if (
-            (!userData || !userData.tel) &&
-            session.user.app_metadata?.provider !== "email"
-          ) {
+          // If no phone number, show mini modal
+          if (!userData?.tel) {
             setMiniData({
               email: userData?.email || session.user.email || "",
               fullName:
@@ -71,7 +66,6 @@ export default function LoginModal({
             return;
           }
 
-          // Normal login flow
           onLoginSuccess?.();
           onClose();
           if (currentUrl) window.history.replaceState({}, "", currentUrl);
@@ -97,12 +91,9 @@ export default function LoginModal({
   // Clean & validate Belgian number
   const cleanAndValidatePhone = (raw: string) => {
     let cleaned = raw.trim().replace(/\s+/g, "").replace(/[^\d+]/g, "");
-
     if (cleaned.startsWith("00")) cleaned = "+" + cleaned.slice(2);
-
     const valid =
       /^0\d{8,9}$/.test(cleaned) || /^\+32\d{8,9}$/.test(cleaned);
-
     return valid ? cleaned : null;
   };
 
@@ -143,7 +134,36 @@ export default function LoginModal({
           password,
         });
         if (error) throw error;
+
+        // ✅ check if phone missing
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          const { data: userData } = await supabase
+            .from("users")
+            .select("tel, email, full_name")
+            .eq("id", user.id)
+            .maybeSingle();
+
+          if (!userData?.tel) {
+            setMiniData({
+              email: userData?.email || user.email || "",
+              fullName:
+                userData?.full_name || user.user_metadata?.full_name || "",
+              phone: "",
+            });
+            setShowMiniModal(true);
+            return;
+          }
+        }
       }
+
+      // If everything is fine
+      onLoginSuccess?.();
+      onClose();
+      if (currentUrl) window.history.replaceState({}, "", currentUrl);
     } catch (err: any) {
       console.error("Auth error:", err);
       setErrorMsg(err.message || "Er ging iets mis, probeer opnieuw.");
@@ -152,7 +172,7 @@ export default function LoginModal({
     }
   };
 
-  // Mini modal submit (for OAuth only)
+  // Mini modal submit (for OAuth or Email users missing phone)
   const handleMiniSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -179,6 +199,7 @@ export default function LoginModal({
       setShowMiniModal(false);
       onLoginSuccess?.();
       onClose();
+      if (currentUrl) window.history.replaceState({}, "", currentUrl);
     } catch (err) {
       console.error("Error updating tel:", err);
       alert("Kon telefoonnummer niet opslaan.");
@@ -232,12 +253,11 @@ export default function LoginModal({
                 type="tel"
                 placeholder="Telefoonnummer"
                 value={phone}
-                onChange={(e) => {
-                  const val = e.target.value
-                    .replace(/[^\d+]/g, "")
-                    .replace(/\s+/g, "");
-                  setPhone(val);
-                }}
+                onChange={(e) =>
+                  setPhone(
+                    e.target.value.replace(/[^\d+]/g, "").replace(/\s+/g, "")
+                  )
+                }
                 required
                 title="Voer een geldig telefoonnummer in"
               />
@@ -280,12 +300,12 @@ export default function LoginModal({
     </div>
   );
 
-  // --- Mini modal (OAuth only) ---
+  // --- Mini modal (missing phone) ---
   const miniModal = showMiniModal && (
     <div className="modal-overlay mini-blocker">
       <div className="mini-modal-content" onClick={(e) => e.stopPropagation()}>
         <h3>Vul je gegevens aan</h3>
-        <p>We missen nog je telefoonnummer om je account te vervolledigen.</p>
+        <p>We missen nog je telefoonnummer om je profiel te vervolledigen.</p>
         <form onSubmit={handleMiniSubmit} className="mini-form">
           <input type="text" value={miniData.fullName} disabled />
           <input type="email" value={miniData.email} disabled />
@@ -293,12 +313,14 @@ export default function LoginModal({
             type="tel"
             placeholder="Telefoonnummer"
             value={miniData.phone}
-            onChange={(e) => {
-              const val = e.target.value
-                .replace(/[^\d+]/g, "")
-                .replace(/\s+/g, "");
-              setMiniData({ ...miniData, phone: val });
-            }}
+            onChange={(e) =>
+              setMiniData({
+                ...miniData,
+                phone: e.target.value
+                  .replace(/[^\d+]/g, "")
+                  .replace(/\s+/g, ""),
+              })
+            }
             required
             autoFocus
           />
