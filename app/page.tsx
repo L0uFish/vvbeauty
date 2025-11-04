@@ -1,7 +1,7 @@
 import HeroCarousel from "./components/HeroCarousel";
 import ActionButtons from "./components/ActionButtons";
 import "./styles/home.css";
-import Header from "./components/Header";
+import Header from "./components/LoginBtn";
 import "./styles/HeroCarousel.css"
 
 export default function Home() {

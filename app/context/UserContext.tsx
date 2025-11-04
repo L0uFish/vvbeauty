@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useRequirePhone } from "@/app/hooks/useRequirePhone"; // Make sure you import useRequirePhone
 
 type UserContextType = {
   user: any;
@@ -18,6 +19,7 @@ const UserContext = createContext<UserContextType>({
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { ensurePhone } = useRequirePhone(); // Using the custom hook
 
   // ✅ Re-fetch the current user/session
   const refreshUser = async () => {
@@ -38,11 +40,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           try {
             const { serviceId, selectedDate, selectedTime } = JSON.parse(pending);
             localStorage.removeItem("pendingBooking");
+            // We trigger the restore directly after login
             window.location.href = `/plannen?service=${serviceId}&date=${selectedDate}&time=${selectedTime}`;
           } catch (e) {
             console.error("Error restoring pending booking:", e);
           }
         }
+
+        // ✅ Ensure phone is verified after login
+        await ensurePhone();
       }
     } catch (err) {
       console.error("Error refreshing user:", err);
@@ -108,6 +114,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             console.error("Error restoring pending booking:", e);
           }
         }
+
+        // ✅ Ensure phone is verified after login
+        ensurePhone();
       }
     });
 

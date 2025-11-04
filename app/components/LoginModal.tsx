@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom"; // Ensure this import
 import { supabase } from "@/lib/supabaseClient";
+import { useUser } from "@/app/context/UserContext";
 import "./loginModal.css";
 
 export default function LoginModal({
@@ -14,7 +15,7 @@ export default function LoginModal({
   onClose: () => void;
   onLoginSuccess?: () => void;
 }) {
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false); // Track if component is mounted on the client
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,108 +24,38 @@ export default function LoginModal({
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Mini modal (for OAuth + Email users missing phone)
-  const [showMiniModal, setShowMiniModal] = useState(false);
-  const [miniData, setMiniData] = useState({
-    email: "",
-    fullName: "",
-    phone: "",
-  });
+  const { refreshUser } = useUser();  // Access refreshUser to update user state
 
-  const currentUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}${window.location.pathname}${window.location.search}`
-      : undefined;
-
+  // This effect ensures that we set the `mounted` state to true once the component is mounted on the client
   useEffect(() => {
     setMounted(true);
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (!session) return;
-
-        try {
-          await supabase.rpc("add_user_if_missing");
-
-          const { data: userData } = await supabase
-            .from("users")
-            .select("email, full_name, tel")
-            .eq("id", session.user.id)
-            .maybeSingle();
-
-          // If no phone number, show mini modal
-          if (!userData?.tel) {
-            setMiniData({
-              email: userData?.email || session.user.email || "",
-              fullName:
-                userData?.full_name ||
-                session.user.user_metadata?.full_name ||
-                "",
-              phone: "",
-            });
-            setShowMiniModal(true);
-            return;
-          }
-
-          onLoginSuccess?.();
-          onClose();
-          if (currentUrl) window.history.replaceState({}, "", currentUrl);
-        } catch (err) {
-          console.error("Error ensuring user record:", err);
-        }
-      }
-    );
-
-    return () => authListener.subscription.unsubscribe();
   }, []);
 
+  // 🛑 THE FIX IS HERE 🛑
+  // Only render the modal if it's mounted on the client AND the 'open' prop is true.
   if (!mounted || !open) return null;
 
-  // OAuth login
   const oauth = async (provider: "google" | "facebook") => {
+    const currentUrl = window.location.origin;
     await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: currentUrl },
+      options: { redirectTo: currentUrl },  // Set redirectTo to the current URL
     });
   };
 
-  // Clean & validate Belgian number
-  const cleanAndValidatePhone = (raw: string) => {
-    let cleaned = raw.trim().replace(/\s+/g, "").replace(/[^\d+]/g, "");
-    if (cleaned.startsWith("00")) cleaned = "+" + cleaned.slice(2);
-    const valid =
-      /^0\d{8,9}$/.test(cleaned) || /^\+32\d{8,9}$/.test(cleaned);
-    return valid ? cleaned : null;
-  };
-
-  // Email signup/login
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg(null);
 
+
     try {
       if (isSignUp) {
-        if (!phone) {
-          setErrorMsg("Telefoonnummer is verplicht.");
-          setLoading(false);
-          return;
-        }
-
-        const cleaned = cleanAndValidatePhone(phone);
-        if (!cleaned) {
-          setErrorMsg(
-            "Voer een geldig Belgisch telefoonnummer in (bv. 0468 57 46 14 of +32 468 57 46 14)."
-          );
-          setLoading(false);
-          return;
-        }
-
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { full_name: fullName, tel: cleaned },
+            data: { full_name: fullName, tel: phone }, // Assume phone is optional for sign up
           },
         });
         if (error) throw error;
@@ -135,35 +66,12 @@ export default function LoginModal({
         });
         if (error) throw error;
 
-        // ✅ check if phone missing
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (user) {
-          const { data: userData } = await supabase
-            .from("users")
-            .select("tel, email, full_name")
-            .eq("id", user.id)
-            .maybeSingle();
-
-          if (!userData?.tel) {
-            setMiniData({
-              email: userData?.email || user.email || "",
-              fullName:
-                userData?.full_name || user.user_metadata?.full_name || "",
-              phone: "",
-            });
-            setShowMiniModal(true);
-            return;
-          }
-        }
       }
 
-      // If everything is fine
+      // If everything is fine, execute onLoginSuccess callback
       onLoginSuccess?.();
-      onClose();
-      if (currentUrl) window.history.replaceState({}, "", currentUrl);
+      await refreshUser();  // Refresh user state
+      onClose();  // Close the modal
     } catch (err: any) {
       console.error("Auth error:", err);
       setErrorMsg(err.message || "Er ging iets mis, probeer opnieuw.");
@@ -172,41 +80,6 @@ export default function LoginModal({
     }
   };
 
-  // Mini modal submit (for OAuth or Email users missing phone)
-  const handleMiniSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const cleaned = cleanAndValidatePhone(miniData.phone);
-    if (!cleaned) {
-      alert(
-        "Voer een geldig Belgisch telefoonnummer in (bv. 0468 57 46 14 of +32 468 57 46 14)."
-      );
-      return;
-    }
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      alert("Geen actieve gebruiker gevonden.");
-      return;
-    }
-
-    try {
-      await supabase.from("users").update({ tel: cleaned }).eq("id", user.id);
-      await supabase.rpc("add_user_if_missing");
-      setShowMiniModal(false);
-      onLoginSuccess?.();
-      onClose();
-      if (currentUrl) window.history.replaceState({}, "", currentUrl);
-    } catch (err) {
-      console.error("Error updating tel:", err);
-      alert("Kon telefoonnummer niet opslaan.");
-    }
-  };
-
-  // --- Main modal ---
   const modalContent = (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -300,43 +173,5 @@ export default function LoginModal({
     </div>
   );
 
-  // --- Mini modal (missing phone) ---
-  const miniModal = showMiniModal && (
-    <div className="modal-overlay mini-blocker">
-      <div className="mini-modal-content" onClick={(e) => e.stopPropagation()}>
-        <h3>Vul je gegevens aan</h3>
-        <p>We missen nog je telefoonnummer om je profiel te vervolledigen.</p>
-        <form onSubmit={handleMiniSubmit} className="mini-form">
-          <input type="text" value={miniData.fullName} disabled />
-          <input type="email" value={miniData.email} disabled />
-          <input
-            type="tel"
-            placeholder="Telefoonnummer"
-            value={miniData.phone}
-            onChange={(e) =>
-              setMiniData({
-                ...miniData,
-                phone: e.target.value
-                  .replace(/[^\d+]/g, "")
-                  .replace(/\s+/g, ""),
-              })
-            }
-            required
-            autoFocus
-          />
-          <button type="submit" className="mini-submit">
-            Opslaan
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-
-  return createPortal(
-    <>
-      {modalContent}
-      {miniModal}
-    </>,
-    document.body
-  );
+  return createPortal(modalContent, document.body);
 }

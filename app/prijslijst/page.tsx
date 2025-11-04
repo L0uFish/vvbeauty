@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import HeroCarousel from "../components/HeroCarousel";
-import Header from "../components/Header";
+import Header from "../components/LoginBtn";
 import HomeButton from "../components/HomeButton";
 import "../styles/prijslijst.css";
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-// ✅ Declare global window helper so TS knows about it
+// Declare global window helper so TypeScript knows about it
 declare global {
   interface Window {
     __confirmPhone?: () => void;
@@ -14,56 +14,66 @@ export function useRequirePhone() {
   const [showModal, setShowModal] = useState(false);
   const [tempPhone, setTempPhone] = useState("");
 
-  // ✅ Clean + validate Belgian phone numbers
+  // Clean and validate Belgian phone numbers with length restriction (8 to 15 characters)
   const cleanAndValidatePhone = (raw: string) => {
     let cleaned = raw.trim().replace(/\s+/g, "").replace(/[^\d+]/g, "");
     if (cleaned.startsWith("00")) cleaned = "+" + cleaned.slice(2);
-    const valid = /^0\d{8,9}$/.test(cleaned) || /^\+32\d{8,9}$/.test(cleaned);
-    return valid ? cleaned : null;
+
+    // Ensure the phone number length is between 8 and 15 characters
+    return cleaned.length >= 8 && cleaned.length <= 15 ? cleaned : null;
   };
 
-  // ✅ Main logic: make sure user has a phone number
+  // Check if the user has a phone number, if not prompt to add one
   const ensurePhone = async (): Promise<boolean> => {
     console.log("📞 ensurePhone() STARTED");
 
     try {
-      const result = await supabase.auth.getUser();
-      console.log("📞 getUser() result:", result);
-
-      const user = result.data?.user;
-      if (!user) {
-        console.warn("⛔ No user returned from supabase.auth.getUser()");
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData) {
+        console.warn("⛔ No user found or error fetching user.");
         return false;
       }
 
-      console.log("📞 Checking phone for user:", user.id);
+      const user = userData.user;
 
-      // 1️⃣ Check phone in auth metadata
-      const metaPhone = user.user_metadata?.tel || user.phone;
-      if (metaPhone && cleanAndValidatePhone(metaPhone)) {
-        console.log("✅ Phone found in auth metadata:", metaPhone);
-        return true;
-      }
-
-      // 2️⃣ Check the `users` table
+      // Step 1: Check if the user exists in the `clients` table
       const { data: profile, error: dbError } = await supabase
-        .from("users")
+        .from("clients")
         .select("tel")
         .eq("id", user.id)
         .single();
 
-      if (dbError) {
-        console.warn("⚠️ Error fetching user profile:", dbError);
+      if (dbError && dbError.code === 'PGRST100') {
+        // User doesn't exist, create them in the `clients` table
+        console.log("❌ User not found in clients table, creating new user...");
+        const { error: insertError } = await supabase
+          .from("clients")
+          .insert([
+            {
+              id: user.id,
+              full_name: user.user_metadata?.full_name || userData.user.email, // Fallback to email if no name
+              email: user.email,
+              created_at: new Date().toISOString(),
+              tel: null, // Phone is null initially
+            },
+          ]);
+
+        if (insertError) {
+          console.warn("⚠️ Error inserting user into clients table:", insertError);
+          return false;
+        }
+
+        console.log("✅ New user created in clients table");
       }
 
-      if (profile?.tel && cleanAndValidatePhone(profile.tel)) {
-        console.log("✅ Phone found in users table:", profile.tel);
+      // Step 2: If no phone number, show the modal to prompt for the phone number
+      if (!profile?.tel) {
+        setShowModal(true);
+      } else {
         return true;
       }
 
-      // 3️⃣ No valid phone → open mini modal
-      setShowModal(true);
-
+      // Step 3: Phone number prompting logic
       return new Promise<boolean>((resolve) => {
         const confirmHandler = async () => {
           const cleaned = cleanAndValidatePhone(tempPhone);
@@ -72,9 +82,9 @@ export function useRequirePhone() {
             return;
           }
 
-          // ✅ Save to both places
+          // Save the phone number to the `clients` table
           const { error: updateError } = await supabase
-            .from("users")
+            .from("clients")
             .update({ tel: cleaned })
             .eq("id", user.id);
 
@@ -84,8 +94,9 @@ export function useRequirePhone() {
             return;
           }
 
+          // Optionally update the phone number in the `auth.users` table as well
           await supabase.auth.updateUser({
-            data: { tel: cleaned },
+            data: { phone: cleaned },
           });
 
           console.log("✅ Phone saved successfully:", cleaned);
@@ -93,7 +104,7 @@ export function useRequirePhone() {
           resolve(true);
         };
 
-        // Make confirm handler accessible to button
+        // Make confirm handler accessible to the button
         window.__confirmPhone = confirmHandler;
       });
     } catch (err) {
@@ -102,7 +113,7 @@ export function useRequirePhone() {
     }
   };
 
-  // ✅ Simple inline modal
+  // Inline modal to prompt for phone number
   const MiniPhoneModal = showModal && (
     <div className="modal-overlay mini-blocker">
       <div className="mini-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -115,10 +126,7 @@ export function useRequirePhone() {
           onChange={(e) => setTempPhone(e.target.value)}
           autoFocus
         />
-        <button
-          className="mini-submit"
-          onClick={() => window.__confirmPhone?.()}
-        >
+        <button className="mini-submit" onClick={() => window.__confirmPhone?.()}>
           Opslaan
         </button>
       </div>

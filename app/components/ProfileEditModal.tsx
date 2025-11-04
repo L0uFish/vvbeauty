@@ -14,7 +14,7 @@ export default function ProfileEditModal({
   open: boolean;
   onClose: () => void;
   onUpdated?: () => void;
-  initialData?: { full_name?: string; email?: string; tel?: string };
+  initialData?: { full_name?: string; email?: string; phone?: string };
 }) {
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -23,7 +23,7 @@ export default function ProfileEditModal({
 
   const [fullName, setFullName] = useState(initialData?.full_name || "");
   const [email, setEmail] = useState(initialData?.email || "");
-  const [phone, setPhone] = useState(initialData?.tel || "");
+  const [phone, setPhone] = useState(initialData?.phone || "");  // Use phone instead of tel
 
   useEffect(() => setMounted(true), []);
 
@@ -31,89 +31,90 @@ export default function ProfileEditModal({
     if (initialData) {
       setFullName(initialData.full_name || "");
       setEmail(initialData.email || "");
-      setPhone(initialData.tel || "");
+      setPhone(initialData.phone || ""); // Default to empty string if no phone
     }
   }, [initialData]);
 
+  // Only render if mounted and open props are true
   if (!mounted || !open) return null;
 
   const cleanAndValidatePhone = (raw: string) => {
+    console.log("📞 Cleaning phone number:", raw);
     let cleaned = raw.trim().replace(/\s+/g, "").replace(/[^\d+]/g, "");
     if (cleaned.startsWith("00")) cleaned = "+" + cleaned.slice(2);
     const valid =
-      /^0\d{8,9}$/.test(cleaned) || /^\+32\d{8,9}$/.test(cleaned);
+      /^0\d{8,9}$/.test(cleaned) || /^\+32\d{8,9}$/.test(cleaned); // Validate Belgian number
     return valid ? cleaned : null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setErrorMsg(null);
-  setSuccessMsg(null);
-  setLoading(true);
+    e.preventDefault();
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setLoading(true);
+    console.log("📝 Submitting profile update...");
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const { data: { user }, error } = await supabase.auth.getUser();
 
-  if (!user) {
-    setErrorMsg("Geen actieve gebruiker gevonden.");
-    setLoading(false);
-    return;
-  }
-
-  const cleanedPhone = cleanAndValidatePhone(phone);
-  if (!cleanedPhone) {
-    setErrorMsg(
-      "Voer een geldig Belgisch telefoonnummer in (bv. 0468 57 46 14 of +32 468 57 46 14)."
-    );
-    setLoading(false);
-    return;
-  }
-
-  try {
-    // 1️⃣ Update in users table
-    const { error: tableError } = await supabase
-      .from("users")
-      .update({
-        full_name: fullName,
-        email,
-        tel: cleanedPhone,
-      })
-      .eq("id", user.id);
-
-    if (tableError) throw tableError;
-
-    // 2️⃣ Update in Supabase auth metadata (only if changed)
-    const updates: any = {};
-    if (email !== user.email) updates.email = email;
-    if (fullName !== user.user_metadata?.full_name) {
-      updates.data = { ...(updates.data || {}), full_name: fullName };
-    }
-    if (cleanedPhone !== user.user_metadata?.tel) {
-      updates.data = { ...(updates.data || {}), tel: cleanedPhone };
+    if (error || !user) {
+      setErrorMsg("Geen actieve gebruiker gevonden.");
+      setLoading(false);
+      return;
     }
 
-    if (Object.keys(updates).length > 0) {
-      const { error: metaError } = await supabase.auth.updateUser(updates);
-      if (metaError) throw metaError;
+    // Clean and validate the phone number
+    const cleanedPhone = cleanAndValidatePhone(phone);
+    if (!cleanedPhone) {
+      setErrorMsg("Voer een geldig Belgisch telefoonnummer in (bv. 0468 57 46 14 of +32 468 57 46 14).");
+      setLoading(false);
+      return;
     }
 
-    setSuccessMsg("Je gegevens zijn succesvol bijgewerkt!");
-    onUpdated?.();
+    try {
+      // Update user info in "users" table
+      const { error: tableError } = await supabase
+        .from("clients") // Ensure table name is 'clients' as per your structure
+        .update({
+          full_name: fullName,
+          email,
+          phone: cleanedPhone, // Ensure you're updating the correct column (phone)
+        })
+        .eq("id", user.id);
 
-    setTimeout(() => {
-      setSuccessMsg(null);
-      onClose();
-    }, 1000);
-  } catch (err: any) {
-    console.error("Error updating profile:", err);
-    setErrorMsg("Er ging iets mis bij het opslaan. Probeer opnieuw.");
-  } finally {
-    setLoading(false);
-  }
-};
+      if (tableError) throw tableError;
 
+      // Update Supabase Auth metadata if there are changes
+      const updates: any = {};
+      if (email !== user.email) updates.email = email;
+      if (fullName !== user.user_metadata?.full_name) {
+        updates.data = { ...(updates.data || {}), full_name: fullName };
+      }
+      if (cleanedPhone !== user.user_metadata?.phone) {
+        updates.data = { ...(updates.data || {}), phone: cleanedPhone };
+      }
 
+      if (Object.keys(updates).length > 0) {
+        const { error: metaError } = await supabase.auth.updateUser(updates);
+        if (metaError) throw metaError;
+      }
+
+      setSuccessMsg("Je gegevens zijn succesvol bijgewerkt!");
+      onUpdated?.();
+
+      // Close the modal after a short delay
+      setTimeout(() => {
+        setSuccessMsg(null);
+        onClose();
+      }, 1000);
+    } catch (err: any) {
+      console.error("Error updating profile:", err);
+      setErrorMsg("Er ging iets mis bij het opslaan. Probeer opnieuw.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Modal content
   const modalContent = (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>

@@ -23,10 +23,10 @@ export default function PlannenInner({ initialService }: { initialService: any }
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [isBookingInProgress, setIsBookingInProgress] = useState(false); // To prevent repeated clicks
 
   const serviceId = searchParams?.get("service");
 
-  // ✅ Restore preselected date/time if redirected after login
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -36,7 +36,7 @@ export default function PlannenInner({ initialService }: { initialService: any }
     if (preTime) setSelectedTime(preTime);
   }, []);
 
-  // ✅ Only re-fetch if user navigates to a different service
+  // Only re-fetch if the user navigates to a different service
   useEffect(() => {
     if (!serviceId || serviceId === initialService?.id) return;
     (async () => {
@@ -50,9 +50,7 @@ export default function PlannenInner({ initialService }: { initialService: any }
     })();
   }, [serviceId, initialService]);
 
-  // ============================================
   // 🟩 HANDLE BOOKING CLICK
-  // ============================================
   const handleBooking = async () => {
     console.log("🟢 handleBooking clicked", { user, selectedDate, selectedTime, service });
 
@@ -61,7 +59,10 @@ export default function PlannenInner({ initialService }: { initialService: any }
       return;
     }
 
-    // ✅ Not logged in → store pending booking
+    if (isBookingInProgress) return; // Prevent multiple clicks during booking
+    setIsBookingInProgress(true);
+
+    // Not logged in → store pending booking
     if (!user) {
       localStorage.setItem(
         "pendingBooking",
@@ -73,15 +74,17 @@ export default function PlannenInner({ initialService }: { initialService: any }
       );
       console.warn("🔒 No user, opening login...");
       openLogin();
+      setIsBookingInProgress(false);
       return;
     }
 
-    // ✅ Ensure phone is filled in
+    // Ensure phone is filled in
     console.log("📞 Ensuring phone...");
     const hasPhone = await ensurePhone();
     console.log("📞 ensurePhone() result:", hasPhone);
     if (!hasPhone) {
       console.warn("⛔ No phone → aborting booking");
+      setIsBookingInProgress(false);
       return;
     }
 
@@ -89,9 +92,7 @@ export default function PlannenInner({ initialService }: { initialService: any }
     await createBooking();
   };
 
-  // ============================================
   // 🟦 CREATE BOOKING IN SUPABASE
-  // ============================================
   const createBooking = async () => {
     console.log("➡️ createBooking started");
 
@@ -137,12 +138,10 @@ export default function PlannenInner({ initialService }: { initialService: any }
       alert("❌ Er ging iets mis. Probeer opnieuw.");
     } finally {
       setSaving(false);
+      setIsBookingInProgress(false); // Reset after booking attempt
     }
   };
 
-  // ============================================
-  // 🧱 UI RENDER
-  // ============================================
   if (!service) {
     return (
       <main className="plannen-container">
@@ -166,11 +165,11 @@ export default function PlannenInner({ initialService }: { initialService: any }
 
         <button
           type="button"
-          disabled={!selectedDate || !selectedTime || saving}
+          disabled={!selectedDate || !selectedTime || saving || isBookingInProgress}
           className={`plannen-button ${selectedDate && selectedTime ? "active" : ""}`}
           onClick={handleBooking}
         >
-          {saving ? "Bezig..." : "Bevestig afspraak"}
+          {saving ? "Bezig..." : isBookingInProgress ? "Bezig..." : "Bevestig afspraak"}
         </button>
 
         {message && <p className="confirmation-message">{message}</p>}

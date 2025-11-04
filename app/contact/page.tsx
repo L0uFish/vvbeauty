@@ -1,7 +1,7 @@
 "use client";
 
 import HeroCarousel from "../components/HeroCarousel";
-import Header from "../components/Header";
+import Header from "../components/LoginBtn";
 import HomeButton from "../components/HomeButton";
 import "../styles/contact.css";
 import {

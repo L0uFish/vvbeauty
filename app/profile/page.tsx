@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useUser } from "../context/UserContext";
 import "../styles/userDashboard.css";
 import ProfileEditModal from "../components/ProfileEditModal";
-import Header from "../components/Header";
+import Header from "../components/LoginBtn";
 import HomeButton from "../components/HomeButton";
 
 export default function Profiel() {
@@ -23,31 +23,42 @@ export default function Profiel() {
 
   const fetchUserData = async () => {
     try {
+      // Fetch user profile 
       const { data: profile, error: profileErr } = await supabase
-        .from("users")
-        .select("full_name, email, tel")
+        .from("clients")
+        .select("full_name, email, phone")
         .eq("id", user.id)
         .single();
+      
       if (profileErr) throw profileErr;
       setUserInfo(profile);
+      
+      // 🟢 LOG 1: Check user profile
+      console.log("🟢 [FETCH] User Profile Data:", profile);
 
+      // Fetch appointments
       const { data: appts, error: apptErr } = await supabase
         .from("appointments")
+        // ✅ THE FIX: Use the specific FK name AND alias the result to 'service_id' 
         .select(`
-          id,
-          date,
-          time,
-          status,
-          services:service_id(id, name, price)
+          id, 
+          date, 
+          time, 
+          status, 
+          service_id:services!fk_appointments_services(id, name, price)
         `)
         .eq("user_id", user.id)
         .order("date", { ascending: false });
 
       if (apptErr) throw apptErr;
 
+      // 🟢 LOG 2: Check appointment data structure (look for 'service_id')
+      console.log("🟢 [FETCH] Appointments Data:", appts);
+      
       setAppointments(appts || []);
+
     } catch (err) {
-      console.error("Error loading profile:", err);
+      console.error("🔴 [FETCH] Error loading profile or appointments:", err);
     } finally {
       setLoadingData(false);
     }
@@ -101,13 +112,15 @@ export default function Profiel() {
     <main className="user-dashboard">
       <Header />
       <HomeButton />
+      {/* -------------------- */}
       {/* === USER INFO === */}
+      {/* -------------------- */}
       <section className="user-info">
         <h2>Mijn Gegevens</h2>
         <div className="user-details">
           <p><strong>Naam:</strong> {userInfo?.full_name}</p>
           <p><strong>E-mail:</strong> {userInfo?.email}</p>
-          <p><strong>Telefoon:</strong> {userInfo?.tel}</p>
+          <p><strong>Telefoon:</strong> {userInfo?.phone}</p>
         </div>
 
         <div className="user-info-actions">
@@ -121,13 +134,15 @@ export default function Profiel() {
           onClose={() => setOpenEdit(false)}
           onUpdated={() => {
             fetchUserData();
-            refreshUser(); // 👈 optional if you want to sync global user data
+            refreshUser(); 
           }}
-          initialData={userInfo}
+          initialData={userInfo} 
         />
       </section>
 
+      {/* -------------------- */}
       {/* === UPCOMING === */}
+      {/* -------------------- */}
       <section id="afspraken" className="user-bookings">
         <h2>Mijn Afspraken</h2>
         {upcoming.length === 0 ? (
@@ -136,7 +151,8 @@ export default function Profiel() {
           upcoming.map((a) => (
             <div key={a.id} className={`booking-card ${a.status}`}>
               <div className="booking-info">
-                <h3>{a.services?.name}</h3>
+                {/* ⚠️ NOTE: Must use 'a.service_id?.name' since the select uses 'service_id:services!fk_appointments_services' */}
+                <h3>{a.service_id?.name}</h3> 
                 <p>
                   {new Date(a.date).toLocaleDateString("nl-BE", {
                     weekday: "long",
@@ -163,7 +179,9 @@ export default function Profiel() {
         )}
       </section>
 
+      {/* -------------------- */}
       {/* === PAST === */}
+      {/* -------------------- */}
       <section className="user-bookings">
         <h2>Vorige Afspraken</h2>
         {past.length === 0 ? (
@@ -173,7 +191,8 @@ export default function Profiel() {
             {visiblePast.map((a) => (
               <div key={a.id} className={`booking-card ${a.status}`}>
                 <div className="booking-info">
-                  <h3>{a.services?.name}</h3>
+                  {/* ⚠️ NOTE: Must use 'a.service_id?.name' */}
+                  <h3>{a.service_id?.name}</h3>
                   <p>
                     {new Date(a.date).toLocaleDateString("nl-BE", {
                       weekday: "long",
@@ -189,7 +208,8 @@ export default function Profiel() {
                   <div className="booking-actions">
                     <button
                       className="rebook-btn"
-                      onClick={() => handleRebook(a.services?.id)}
+                      // ⚠️ NOTE: Must use 'a.service_id?.id' for rebooking
+                      onClick={() => handleRebook(a.service_id?.id)}
                     >
                       Herboek
                     </button>
