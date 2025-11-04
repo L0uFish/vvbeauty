@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createPortal } from "react-dom"; // Ensure this import
+import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { useUser } from "@/app/context/UserContext";
 import "./loginModal.css";
+import { cleanAndValidatePhone } from "@/app/hooks/useRequirePhone"; 
 
 export default function LoginModal({
   open,
@@ -15,7 +16,7 @@ export default function LoginModal({
   onClose: () => void;
   onLoginSuccess?: () => void;
 }) {
-  const [mounted, setMounted] = useState(false); // Track if component is mounted on the client
+  const [mounted, setMounted] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,22 +25,19 @@ export default function LoginModal({
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const { refreshUser } = useUser();  // Access refreshUser to update user state
+  const { refreshUser } = useUser(); 
 
-  // This effect ensures that we set the `mounted` state to true once the component is mounted on the client
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // 🛑 THE FIX IS HERE 🛑
-  // Only render the modal if it's mounted on the client AND the 'open' prop is true.
   if (!mounted || !open) return null;
 
   const oauth = async (provider: "google" | "facebook") => {
     const currentUrl = window.location.origin;
     await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: currentUrl },  // Set redirectTo to the current URL
+      options: { redirectTo: currentUrl },
     });
   };
 
@@ -47,31 +45,56 @@ export default function LoginModal({
     e.preventDefault();
     setLoading(true);
     setErrorMsg(null);
-
+    
+    let cleanedPhone: string | null = null;
 
     try {
       if (isSignUp) {
+        // --- Phone Number Validation and Cleaning ---
+        cleanedPhone = cleanAndValidatePhone(phone);
+        
+        if (!cleanedPhone) {
+          throw new Error("Voer een geldig Belgisch telefoonnummer in (bv. 0482 45 56 42).");
+        }
+        
+        // --- Perform Sign Up ---
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { full_name: fullName, tel: phone }, // Assume phone is optional for sign up
+            data: { full_name: fullName, phone: cleanedPhone }, 
           },
         });
+        
+        // 1. If sign up is successful, insert the record into the 'clients' table
+        if (!error) {
+            // 🟢 FIX: Await the getUser() promise to access the user object
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            const { error: tableError } = await supabase.from('clients').insert({
+                id: user?.id, // Use the user ID from the awaited result
+                full_name: fullName,
+                email: email,
+                phone: cleanedPhone,
+            });
+            if (tableError) console.error("Error inserting client record:", tableError);
+        }
+
         if (error) throw error;
+        
       } else {
+        // --- Perform Login ---
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
-
       }
 
       // If everything is fine, execute onLoginSuccess callback
       onLoginSuccess?.();
-      await refreshUser();  // Refresh user state
-      onClose();  // Close the modal
+      await refreshUser();
+      onClose();
     } catch (err: any) {
       console.error("Auth error:", err);
       setErrorMsg(err.message || "Er ging iets mis, probeer opnieuw.");
@@ -124,13 +147,9 @@ export default function LoginModal({
               />
               <input
                 type="tel"
-                placeholder="Telefoonnummer"
+                placeholder="Telefoonnummer (bv. 0482 45 56 42)"
                 value={phone}
-                onChange={(e) =>
-                  setPhone(
-                    e.target.value.replace(/[^\d+]/g, "").replace(/\s+/g, "")
-                  )
-                }
+                onChange={(e) => setPhone(e.target.value)}
                 required
                 title="Voer een geldig telefoonnummer in"
               />
