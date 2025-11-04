@@ -45,7 +45,7 @@ export default function PhoneModal({
     try {
       const { error } = await supabase
         .from("clients")
-        .update({ tel: cleaned })
+        .update({ phone: cleaned })
         .eq("id", userId);
 
       if (error) throw error;

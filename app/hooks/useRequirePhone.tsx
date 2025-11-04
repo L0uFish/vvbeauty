@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-// Declare global window helper so TypeScript knows about it
 declare global {
   interface Window {
     __confirmPhone?: () => void;
@@ -14,106 +13,131 @@ export function useRequirePhone() {
   const [showModal, setShowModal] = useState(false);
   const [tempPhone, setTempPhone] = useState("");
 
-  // Clean and validate Belgian phone numbers with length restriction (8 to 15 characters)
-  const cleanAndValidatePhone = (raw: string) => {
-    let cleaned = raw.trim().replace(/\s+/g, "").replace(/[^\d+]/g, "");
-    if (cleaned.startsWith("00")) cleaned = "+" + cleaned.slice(2);
+  // === CLEAN + VALIDATE BELGIAN PHONE ===
+  const cleanAndValidatePhone = (raw: string): string | null => {
+    console.log("📞 Raw input:", raw);
+    if (!raw) return null;
 
-    // Ensure the phone number length is between 8 and 15 characters
-    return cleaned.length >= 8 && cleaned.length <= 15 ? cleaned : null;
+    // Remove spaces and non-numeric symbols except '+'
+    let cleaned = raw.replace(/\s+/g, "").replace(/[^\d+]/g, "");
+    console.log("🧹 Cleaned input:", cleaned);
+
+    // --- Normalization rules ---
+    // 1. "0032468574614" → "+32468574614"
+    // 2. "0468574614" → "+32468574614"
+    // 3. "+32468574614" → stays the same
+    if (cleaned.startsWith("00")) {
+      cleaned = "+" + cleaned.slice(2);
+    } else if (cleaned.startsWith("0")) {
+      cleaned = "+32" + cleaned.slice(1);
+    } else if (/^32\d{8}$/.test(cleaned)) {
+      cleaned = "+" + cleaned;
+    }
+
+    console.log("🔹 Normalized phone:", cleaned);
+
+    // --- Validation: must be a proper Belgian mobile ---
+    // Belgian GSM = +324XXXXXXXX (total length = 12)
+    const belgianRegex = /^\+324\d{8}$/;
+    const valid = belgianRegex.test(cleaned);
+
+    console.log("✅ Valid:", valid, "| Final:", cleaned);
+    return valid ? cleaned : null;
   };
 
-  // Check if the user has a phone number, if not prompt to add one
+  // === MAIN FUNCTION ===
   const ensurePhone = async (): Promise<boolean> => {
-    console.log("📞 ensurePhone() STARTED");
+    console.log("🚀 ensurePhone() STARTED");
 
     try {
       const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError || !userData) {
-        console.warn("⛔ No user found or error fetching user.");
+      if (userError || !userData?.user) {
+        console.warn("⛔ No user found or error fetching user:", userError);
         return false;
       }
 
       const user = userData.user;
+      console.log("👤 Logged in as:", user.email);
 
-      // Step 1: Check if the user exists in the `clients` table
+      // Fetch client profile
       const { data: profile, error: dbError } = await supabase
         .from("clients")
-        .select("tel")
+        .select("phone")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (dbError && dbError.code === 'PGRST100') {
-        // User doesn't exist, create them in the `clients` table
-        console.log("❌ User not found in clients table, creating new user...");
-        const { error: insertError } = await supabase
-          .from("clients")
-          .insert([
-            {
-              id: user.id,
-              full_name: user.user_metadata?.full_name || userData.user.email, // Fallback to email if no name
-              email: user.email,
-              created_at: new Date().toISOString(),
-              tel: null, // Phone is null initially
-            },
-          ]);
-
-        if (insertError) {
-          console.warn("⚠️ Error inserting user into clients table:", insertError);
-          return false;
-        }
-
-        console.log("✅ New user created in clients table");
+      if (dbError) {
+        console.error("💥 Error fetching client profile:", dbError);
+        return false;
       }
 
-      // Step 2: If no phone number, show the modal to prompt for the phone number
-      if (!profile?.tel) {
+      if (!profile) {
+        console.log("🆕 No client record found. Creating new...");
+        const { error: insertError } = await supabase.from("clients").insert([
+          {
+            id: user.id,
+            full_name: user.user_metadata?.full_name || user.email,
+            email: user.email,
+            phone: null,
+            created_at: new Date().toISOString(),
+          },
+        ]);
+
+        if (insertError) {
+          console.error("💥 Failed to create new client:", insertError);
+          return false;
+        }
+      }
+
+      if (!profile?.phone) {
+        console.log("☎️ No phone number found — opening modal...");
         setShowModal(true);
       } else {
+        console.log("✅ Existing phone found:", profile.phone);
         return true;
       }
 
-      // Step 3: Phone number prompting logic
+      // Wait for confirmation
       return new Promise<boolean>((resolve) => {
         const confirmHandler = async () => {
+          console.log("🖐 Confirm handler called with:", tempPhone);
           const cleaned = cleanAndValidatePhone(tempPhone);
+
           if (!cleaned) {
-            alert("❌ Ongeldig telefoonnummer.");
+            alert("❌ Ongeldig telefoonnummer.\nGebruik bv. 0468574614 of +32468574614");
+            console.warn("Invalid number entered:", tempPhone);
             return;
           }
 
-          // Save the phone number to the `clients` table
+          // Save to clients table
           const { error: updateError } = await supabase
             .from("clients")
-            .update({ tel: cleaned })
+            .update({ phone: cleaned })
             .eq("id", user.id);
 
           if (updateError) {
             alert("❌ Kon telefoonnummer niet opslaan.");
-            console.error(updateError);
+            console.error("💥 Update error:", updateError);
             return;
           }
 
-          // Optionally update the phone number in the `auth.users` table as well
-          await supabase.auth.updateUser({
-            data: { phone: cleaned },
-          });
+          // Update auth metadata too (optional)
+          await supabase.auth.updateUser({ data: { phone: cleaned } });
 
           console.log("✅ Phone saved successfully:", cleaned);
           setShowModal(false);
           resolve(true);
         };
 
-        // Make confirm handler accessible to the button
         window.__confirmPhone = confirmHandler;
       });
     } catch (err) {
-      console.error("💥 Error in ensurePhone():", err);
+      console.error("💥 Uncaught error in ensurePhone():", err);
       return false;
     }
   };
 
-  // Inline modal to prompt for phone number
+  // === MINI MODAL ===
   const MiniPhoneModal = showModal && (
     <div className="modal-overlay mini-blocker">
       <div className="mini-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -125,6 +149,7 @@ export function useRequirePhone() {
           value={tempPhone}
           onChange={(e) => setTempPhone(e.target.value)}
           autoFocus
+          onKeyDown={(e) => e.key === "Enter" && window.__confirmPhone?.()}
         />
         <button className="mini-submit" onClick={() => window.__confirmPhone?.()}>
           Opslaan
