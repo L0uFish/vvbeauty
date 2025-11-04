@@ -33,7 +33,7 @@ export default function HeroCarousel() {
     let rafId: number;
 
     const animate = () => {
-      offset -= 0.5; // scrolling speed
+      offset -= 1; // scrolling speed
       if (Math.abs(offset) >= track.scrollWidth / 2) offset = 0;
       track.style.transform = `translateX(${offset}px)`;
       rafId = requestAnimationFrame(animate);

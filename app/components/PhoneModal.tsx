@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+// 🟢 The logic is fixed in the imported function
+import { cleanAndValidatePhone } from "@/app/hooks/useRequirePhone"; 
 import "./phoneModal.css";
 
 export default function PhoneModal({
@@ -19,24 +21,17 @@ export default function PhoneModal({
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const cleanAndValidatePhone = (raw: string) => {
-    let cleaned = raw.trim().replace(/\s+/g, "").replace(/[^\d+]/g, "");
-    if (cleaned.startsWith("00")) cleaned = "+" + cleaned.slice(2);
-    const valid =
-      /^0\d{8,9}$/.test(cleaned) || /^\+32\d{8,9}$/.test(cleaned);
-    console.log(`Phone cleaned: ${cleaned}, valid: ${valid}`);
-    return valid ? cleaned : null;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg(null);
 
-    const cleaned = cleanAndValidatePhone(phone);
+    // 🟢 Use the imported, consistent validation logic
+    const cleaned = cleanAndValidatePhone(phone); 
+    
     if (!cleaned) {
       setErrorMsg(
-        "Voer een geldig Belgisch telefoonnummer in (bv. 0468 57 46 14 of +32 468 57 46 14)."
+        "Voer een geldig Belgisch telefoonnummer in (bv. 0482 45 56 42)."
       );
       setLoading(false);
       return;
@@ -75,7 +70,7 @@ export default function PhoneModal({
         <form onSubmit={handleSubmit}>
           <input
             type="tel"
-            placeholder="Telefoonnummer"
+            placeholder="Telefoonnummer (bv. 0482 45 56 42)"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             required

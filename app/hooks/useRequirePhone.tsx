@@ -1,50 +1,116 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react"; // 🟢 Import useRef
 import { supabase } from "@/lib/supabaseClient";
 
-declare global {
-  interface Window {
-    __confirmPhone?: () => void;
-  }
-}
+// We no longer need the global declaration for __confirmPhone
+// declare global {
+//   interface Window {
+//     __confirmPhone?: () => void;
+//   }
+// }
 
+// === CLEAN + VALIDATE BELGIAN PHONE (EXPORTED) ===
+/**
+ * Normalizes all valid Belgian numbers (+32 / 0032 / 0 prefix) 
+ * to a 9 or 10-digit local format starting with '0' (e.g., "0482455642").
+ */
+export const cleanAndValidatePhone = (raw: string): string | null => {
+  // 🟢 DEBUG 1: What raw input is received?
+  console.log("📞 [Validator] Raw input received:", raw);
+  
+  // 1. **CRITICAL FIX**: Trim whitespace immediately
+  raw = raw.trim(); 
+  
+  if (!raw) {
+      console.log("⛔ [Validator] Input is empty after trimming.");
+      return null;
+  }
+  
+  // 2. Remove all spaces, dashes, and non-numeric characters except '+'
+  let cleaned = raw.replace(/\s/g, "").replace(/[^0-9+]/g, "");
+  console.log("🧹 [Validator] Cleaned input (numeric/plus only):", cleaned);
+
+  // --- Normalization to Local "0..." format ---
+  if (cleaned.startsWith("0032")) {
+    // "0032" prefix -> "0"
+    cleaned = "0" + cleaned.slice(4);
+  } else if (cleaned.startsWith("+32")) {
+    // "+32" prefix -> "0"
+    cleaned = "0" + cleaned.slice(3);
+  } else if (cleaned.startsWith("32") && cleaned.length >= 10 && !cleaned.startsWith('+')) {
+    // "32" prefix (without '+') -> "0"
+    cleaned = "0" + cleaned.slice(2);
+  }
+  // If it starts with '0' already, it remains as is.
+  console.log("🔹 [Validator] Normalized to Local '0...' format:", cleaned);
+
+  // --- Validation (Must be a 9 or 10-digit number starting with '0') ---
+  const localRegex = /^0\d{8,9}$/; 
+  const valid = localRegex.test(cleaned);
+
+  if (!valid) {
+    console.log(`⛔ [Validator] Validation failed. Resulting number: ${cleaned}. Regex: ${localRegex}`);
+    return null;
+  }
+  
+  // 🟢 DEBUG 2: Final successful result
+  console.log("✅ [Validator] Validation successful. Final number:", cleaned);
+  return cleaned;
+};
+
+// === HOOK START ===
 export function useRequirePhone() {
   const [showModal, setShowModal] = useState(false);
   const [tempPhone, setTempPhone] = useState("");
+  
+  // 🟢 Use ref to hold the promise resolver for stable access
+  const resolveRef = useRef<((value: boolean) => void) | null>(null); 
+  
+  // 🟢 Handler function (stable, can read latest state)
+  const confirmHandler = async () => {
+    // 🟢 DEBUG 3: What is the state value right before validation?
+    console.log("🖐 Confirm handler called with state value (tempPhone):", `"${tempPhone}"`); 
 
-  // === CLEAN + VALIDATE BELGIAN PHONE ===
-  const cleanAndValidatePhone = (raw: string): string | null => {
-    console.log("📞 Raw input:", raw);
-    if (!raw) return null;
+    const cleaned = cleanAndValidatePhone(tempPhone);
 
-    // Remove spaces and non-numeric symbols except '+'
-    let cleaned = raw.replace(/\s+/g, "").replace(/[^\d+]/g, "");
-    console.log("🧹 Cleaned input:", cleaned);
-
-    // --- Normalization rules ---
-    // 1. "0032468574614" → "+32468574614"
-    // 2. "0468574614" → "+32468574614"
-    // 3. "+32468574614" → stays the same
-    if (cleaned.startsWith("00")) {
-      cleaned = "+" + cleaned.slice(2);
-    } else if (cleaned.startsWith("0")) {
-      cleaned = "+32" + cleaned.slice(1);
-    } else if (/^32\d{8}$/.test(cleaned)) {
-      cleaned = "+" + cleaned;
+    if (!cleaned) {
+      alert("❌ Ongeldig telefoonnummer.\nVoer een geldig Belgisch nummer in (bv. 0482 45 56 42).");
+      console.warn("Invalid number entered:", tempPhone);
+      return;
     }
 
-    console.log("🔹 Normalized phone:", cleaned);
+    // --- Save Logic (Need to re-fetch user info, as it's not a dependency) ---
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData?.user;
+    if (!user) {
+        resolveRef.current?.(false);
+        setShowModal(false);
+        return; 
+    }
+    
+    // Save to clients table
+    const { error: updateError } = await supabase
+      .from("clients")
+      .update({ phone: cleaned })
+      .eq("id", user.id);
 
-    // --- Validation: must be a proper Belgian mobile ---
-    // Belgian GSM = +324XXXXXXXX (total length = 12)
-    const belgianRegex = /^\+324\d{8}$/;
-    const valid = belgianRegex.test(cleaned);
+    if (updateError) {
+      alert("❌ Kon telefoonnummer niet opslaan.");
+      console.error("💥 Update error:", updateError);
+      return;
+    }
 
-    console.log("✅ Valid:", valid, "| Final:", cleaned);
-    return valid ? cleaned : null;
+    // Update auth metadata too (optional)
+    await supabase.auth.updateUser({ data: { phone: cleaned } });
+
+    console.log("✅ Phone saved successfully:", cleaned);
+    setShowModal(false);
+    
+    // 🟢 Resolve the promise and continue the booking flow
+    resolveRef.current?.(true); 
   };
-
+  
   // === MAIN FUNCTION ===
   const ensurePhone = async (): Promise<boolean> => {
     console.log("🚀 ensurePhone() STARTED");
@@ -71,6 +137,7 @@ export function useRequirePhone() {
         return false;
       }
 
+      // Create new client record if it doesn't exist
       if (!profile) {
         console.log("🆕 No client record found. Creating new...");
         const { error: insertError } = await supabase.from("clients").insert([
@@ -92,45 +159,16 @@ export function useRequirePhone() {
       if (!profile?.phone) {
         console.log("☎️ No phone number found — opening modal...");
         setShowModal(true);
+        
+        // 🟢 Return a new promise and capture its resolver
+        return new Promise<boolean>((resolve) => {
+            resolveRef.current = resolve; 
+        });
       } else {
         console.log("✅ Existing phone found:", profile.phone);
         return true;
       }
 
-      // Wait for confirmation
-      return new Promise<boolean>((resolve) => {
-        const confirmHandler = async () => {
-          console.log("🖐 Confirm handler called with:", tempPhone);
-          const cleaned = cleanAndValidatePhone(tempPhone);
-
-          if (!cleaned) {
-            alert("❌ Ongeldig telefoonnummer.\nGebruik bv. 0468574614 of +32468574614");
-            console.warn("Invalid number entered:", tempPhone);
-            return;
-          }
-
-          // Save to clients table
-          const { error: updateError } = await supabase
-            .from("clients")
-            .update({ phone: cleaned })
-            .eq("id", user.id);
-
-          if (updateError) {
-            alert("❌ Kon telefoonnummer niet opslaan.");
-            console.error("💥 Update error:", updateError);
-            return;
-          }
-
-          // Update auth metadata too (optional)
-          await supabase.auth.updateUser({ data: { phone: cleaned } });
-
-          console.log("✅ Phone saved successfully:", cleaned);
-          setShowModal(false);
-          resolve(true);
-        };
-
-        window.__confirmPhone = confirmHandler;
-      });
     } catch (err) {
       console.error("💥 Uncaught error in ensurePhone():", err);
       return false;
@@ -145,13 +183,14 @@ export function useRequirePhone() {
         <p>We hebben je nummer nodig om verder te gaan.</p>
         <input
           type="tel"
-          placeholder="bv. 0468 57 46 14"
+          placeholder="bv. 0482 45 56 42"
           value={tempPhone}
           onChange={(e) => setTempPhone(e.target.value)}
           autoFocus
-          onKeyDown={(e) => e.key === "Enter" && window.__confirmPhone?.()}
+          // 🟢 Call the stable handler directly
+          onKeyDown={(e) => e.key === "Enter" && confirmHandler()}
         />
-        <button className="mini-submit" onClick={() => window.__confirmPhone?.()}>
+        <button className="mini-submit" onClick={confirmHandler}>
           Opslaan
         </button>
       </div>
