@@ -1,61 +1,98 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react"; // Added useCallback
 import { supabase } from "@/lib/supabaseClient";
-import LoginModal from "./LoginModal"; // Import the LoginModal component
+import LoginModal from "./LoginModal";
 import "../styles/Header.css";
 
+// Define a more specific type for the user, including the role data
+interface AppUser {
+  id: string;
+  email: string;
+  user_metadata: {
+    full_name?: string;
+    [key: string]: any;
+  };
+  // Include other relevant Supabase User properties if needed
+}
+
 export default function LoginBtn() {
-  const [user, setUser] = useState<any>(null); // Directly manage user state
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false); // State to control LoginModal visibility
+  const [user, setUser] = useState<AppUser | null>(null);
+  const [role, setRole] = useState<string | null>(null); // New state for the user's role
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // --- New Function: Fetch User Role from Database ---
+  const fetchUserRole = useCallback(async (userId: string) => {
+    try {
+      // Assuming your client/profile table is named 'clients' and the user ID column is 'id'
+      const { data, error } = await supabase
+        .from("clients")
+        .select("role")
+        .eq("id", userId) // Match the Supabase User ID
+        .single(); // Expecting one row
+
+      if (error && error.code !== 'PGRST116') { // Ignore "No rows found" error on first login/profile creation
+        throw error;
+      }
+      
+      // Set the role state, defaulting to 'client' if no role is found (or on error)
+      setRole(data?.role || "client"); 
+    } catch (err) {
+      console.error("Error fetching user role:", err);
+      setRole("client"); // Default to client on failure
+    }
+  }, []);
+
   // Fetch user session on mount and restore the session
   useEffect(() => {
-
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        return;
-      }
-
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        setUser(session.user); // Set user from session
-      } else {
+        setUser(session.user as AppUser);
+        fetchUserRole(session.user.id); // Fetch role for the initial session
       }
     });
 
     // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null); // Update user on session change
+      const newUser = (session?.user as AppUser) || null;
+      setUser(newUser); // Update user on session change
+
+      if (newUser) {
+        fetchUserRole(newUser.id); // Fetch role when user logs in/session changes
+      } else {
+        setRole(null); // Clear role on logout
+      }
     });
 
     // Cleanup listener on unmount
     return () => {
-      authListener?.subscription?.unsubscribe(); // Correct way to unsubscribe
+      authListener?.subscription?.unsubscribe();
     };
-  }, []);
+  }, [fetchUserRole]); // Dependency array includes fetchUserRole
 
   // Handle opening the LoginModal
   const handleLoginClick = () => {
-    setIsLoginModalOpen(true); // Show the LoginModal when the "Log In" button is clicked
+    setIsLoginModalOpen(true);
   };
 
   // Handle closing the LoginModal
   const handleModalClose = () => {
-    setIsLoginModalOpen(false); // Close the modal
+    setIsLoginModalOpen(false);
   };
 
   const handleLogout = async () => {
-
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
         throw error;
       }
-      setUser(null); // Clear user state on logout
+      setUser(null);
+      setRole(null); // Clear role on logout
       setDropdownOpen(false);
     } catch (err) {
+      console.error("Logout Error:", err);
     }
   };
 
@@ -69,6 +106,16 @@ export default function LoginBtn() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Update onLoginSuccess to also fetch the role immediately after successful login
+  const handleLoginSuccess = useCallback(() => {
+    setIsLoginModalOpen(false);
+    // After login, the onAuthStateChange listener will eventually fire and update user/role.
+    // For immediate update, we can also trigger a check if we need to.
+    // However, since onAuthStateChange is already listening, we'll rely on it.
+    // If the modal handles the session update internally, the useEffect listener takes care of the rest.
+  }, []);
+
 
   return (
     <header className="top-header">
@@ -112,6 +159,11 @@ export default function LoginBtn() {
 
           {dropdownOpen && (
             <div className="user-dropdown">
+              {/* --- Admin Panel Link Conditional Rendering --- */}
+              {role === "admin" && (
+                <a href="/admin">AdminPanel</a>
+              )}
+              {/* ------------------------------------------- */}
               <a href="/profile">Mijn gegevens</a>
               <button className="logout-option" type="button" onClick={handleLogout}>
                 Uitloggen
@@ -125,9 +177,7 @@ export default function LoginBtn() {
       <LoginModal
         open={isLoginModalOpen}
         onClose={handleModalClose}
-        onLoginSuccess={() => {
-          setIsLoginModalOpen(false); // Close modal after successful login
-        }}
+        onLoginSuccess={handleLoginSuccess}
       />
     </header>
   );

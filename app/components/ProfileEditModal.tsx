@@ -22,11 +22,11 @@ export default function ProfileEditModal({
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  // ⭐ NEW STATE FOR DELETION CONFIRMATION
+  const [confirmDelete, setConfirmDelete] = useState(false); 
 
   const [fullName, setFullName] = useState(initialData?.full_name || "");
   const [email, setEmail] = useState(initialData?.email || "");
-  // Ensure the phone state is always the 0... format if initialized, 
-  // but the user can type anything in
   const [phone, setPhone] = useState(initialData?.phone || ""); 
 
   useEffect(() => setMounted(true), []);
@@ -50,6 +50,8 @@ export default function ProfileEditModal({
     setErrorMsg(null);
     setSuccessMsg(null);
     setLoading(true);
+    // Reset delete confirmation if the user is just submitting the form
+    setConfirmDelete(false); 
     console.log("📝 Submitting profile update...");
 
     try {
@@ -132,6 +134,70 @@ export default function ProfileEditModal({
     }
   };
 
+  /**
+   * ⭐ NEW FUNCTION: Handles the account deletion process.
+   * NOTE: This assumes you have a secure server-side API (e.g., /api/delete-account)
+   * that uses the Supabase service_role key to delete the user via the Auth Admin API.
+   */
+  const handleDeleteAccount = async () => {
+    if (!confirmDelete) {
+      setErrorMsg("Bevestig eerst de verwijdering door op de knop te drukken.");
+      setConfirmDelete(true); // Ask for confirmation
+      return;
+    }
+
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setLoading(true);
+    console.log("🔥 Initiating account deletion...");
+
+    try {
+      // 1. Get the current user's JWT to send to the server API
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error("Geen actieve sessie gevonden. Log opnieuw in.");
+      }
+
+      // 2. Call the secure server-side endpoint
+      const response = await fetch('/api/delete-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Optionally send the JWT for server-side verification
+          'Authorization': `Bearer ${session.access_token}`, 
+        },
+        body: JSON.stringify({ userId: session.user.id }) 
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Fout bij het verwijderen van de account.");
+      }
+
+      // 3. If successful, sign the user out client-side
+      await supabase.auth.signOut();
+      
+      setSuccessMsg("Je account is succesvol verwijderd. Je wordt nu uitgelogd.");
+      
+      // Close the modal and trigger the global update/redirect after a short delay
+      setTimeout(() => {
+        onUpdated?.(); // Should trigger a redirect/state update in parent component
+        onClose();
+        // Force a page reload/redirect to ensure a fresh state
+        window.location.href = '/'; 
+      }, 2000);
+
+    } catch (err: any) {
+      console.error("Error deleting account:", err);
+      setErrorMsg(err.message || "Er ging iets mis bij het verwijderen van de account. Probeer opnieuw.");
+      setConfirmDelete(false); // Reset confirmation state on error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   // Modal content
   const modalContent = (
     <div className="modal-overlay" onClick={onClose}>
@@ -183,9 +249,61 @@ export default function ProfileEditModal({
           )}
 
           <button type="submit" disabled={loading}>
-            {loading ? "Opslaan..." : "Wijzigingen opslaan"}
+            {loading && !confirmDelete ? "Opslaan..." : "Wijzigingen opslaan"}
           </button>
         </form>
+
+        {/* --- ⭐ NEW: Account Deletion Section --- */}
+        <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px solid #eee' }}>
+          <h3 style={{ fontSize: '1.1rem', color: '#ff4d4f', marginBottom: '10px' }}>Account Verwijderen</h3>
+          {confirmDelete ? (
+            <>
+              <p style={{ color: '#ff4d4f', fontSize: '0.9rem', marginBottom: '10px' }}>
+                **Weet u zeker dat u uw account wilt verwijderen?** Al uw gegevens gaan permanent verloren.
+              </p>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={loading}
+                style={{
+                  backgroundColor: '#ff4d4f',
+                  color: 'white',
+                  borderColor: '#ff4d4f',
+                  marginBottom: '10px',
+                }}
+              >
+                {loading && confirmDelete ? "Verwijderen..." : "JA, Verwijder mijn account permanent"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                disabled={loading}
+                style={{
+                  backgroundColor: '#fff',
+                  color: '#333',
+                  border: '1px solid #ccc',
+                }}
+              >
+                Annuleren
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              disabled={loading}
+              style={{
+                backgroundColor: '#f9f9f9',
+                color: '#ff4d4f',
+                border: '1px solid #ff4d4f',
+              }}
+            >
+              Account verwijderen
+            </button>
+          )}
+        </div>
+        {/* ------------------------------------------ */}
+
       </div>
     </div>
   );
