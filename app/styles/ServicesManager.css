@@ -1,224 +1,207 @@
-/* @/styles/ServicesManager.css */
-
-.services-manager-container {
-    display: grid;
-    grid-template-columns: 1fr 2fr; /* Form on left (1), List on right (2) */
-    gap: 2rem;
-    padding: 1rem;
+/* === Main Container === */
+.services-manager {
+  padding: 1rem;
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
 }
 
-/* --- Form Section --- */
-.service-form-wrapper {
-    background-color: #f9fafb; /* Gray 50 */
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    height: fit-content; /* Ensure wrapper only takes needed height */
+/* === Header Bar === */
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
 }
 
-.form-header {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #1f2937;
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #e5e7eb;
+.header-bar h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111827;
 }
 
-.service-form {
-    display: flex;
+.add-btn {
+  background-color: #4f46e5;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.add-btn:hover {
+  background-color: #4338ca;
+  transform: scale(1.05);
+}
+
+/* === Category Section === */
+.category-section {
+  margin-bottom: 2rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  transition: background-color 0.2s;
+}
+
+.category-section.dragging {
+  background-color: #eef2ff;
+}
+
+/* === Category Title === */
+.category-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  cursor: grab;
+}
+
+.category-title:hover {
+  color: #4338ca;
+}
+
+.category-title::before {
+  content: "⋮⋮";
+  color: #9ca3af;
+  margin-right: 0.5rem;
+  cursor: grab;
+}
+
+/* === Table Styling === */
+.services-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.services-table th,
+.services-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.services-table th {
+  background-color: #f3f4f6;
+  color: #374151;
+  font-weight: 600;
+  font-size: 0.95rem;
+  user-select: none;
+}
+
+.services-table tr:hover {
+  background-color: #f9fafb;
+}
+
+/* === Row Styles === */
+.service-row {
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.service-row.dragging {
+  background-color: #eef2ff;
+  transform: scale(1.01);
+}
+
+/* Inactive services appear dimmed */
+.service-row.inactive {
+  color: #9ca3af;
+  font-style: italic;
+  background-color: #fafafa;
+}
+
+/* === Active Toggle === */
+.services-table td:first-child {
+  text-align: center;
+  cursor: pointer;
+  width: 50px;
+}
+
+.services-table td:first-child:hover {
+  background-color: #eef2ff;
+  transform: scale(1.05);
+}
+
+/* === Inline Editing Inputs === */
+.services-table input[type="text"],
+.services-table input[type="number"] {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.services-table input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  background-color: #eef2ff;
+}
+
+/* === Action Buttons === */
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.delete-btn {
+  background-color: transparent;
+  color: #ef4444;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.delete-btn:hover {
+  color: #dc2626;
+  transform: scale(1.1);
+}
+
+/* === Drag Handle === */
+.drag-handle {
+  cursor: grab;
+  color: #9ca3af;
+  font-size: 1.2rem;
+  margin-left: 0.5rem;
+  user-select: none;
+}
+
+.drag-handle:hover {
+  color: #4f46e5;
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  .header-bar {
     flex-direction: column;
-    gap: 1rem;
-}
+    align-items: flex-start;
+  }
 
-.form-field {
-    display: flex;
-    flex-direction: column;
-}
+  .add-btn {
+    margin-top: 0.75rem;
+  }
 
-.form-field span {
-    font-weight: 500;
-    color: #374151; /* Gray 700 */
-    margin-bottom: 0.25rem;
-    font-size: 0.9rem;
-}
+  .services-table th,
+  .services-table td {
+    padding: 0.5rem;
+    font-size: 0.85rem;
+  }
 
-.text-input, .number-input, .textarea-input {
-    padding: 0.6rem 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
-    transition: border-color 0.15s;
+  .drag-handle {
     font-size: 1rem;
-    width: 100%;
-}
-
-.text-input:focus, .number-input:focus, .textarea-input:focus {
-    border-color: #4f46e5; /* Indigo 600 */
-    box-shadow: 0 0 0 1px #4f46e5;
-    outline: none;
-}
-
-.inline-fields {
-    display: flex;
-    gap: 1rem;
-}
-
-.half-width {
-    flex: 1;
-}
-
-/* Checkbox specific styling */
-.checkbox-field {
-    flex-direction: row;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-}
-
-.checkbox-field span {
-    margin-bottom: 0;
-    font-weight: 400;
-}
-
-.checkbox-input {
-    width: auto;
-}
-
-.form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.75rem;
-    margin-top: 1.5rem;
-}
-
-.cancel-button {
-    background-color: #e5e7eb; /* Gray 200 */
-    color: #4b5563; /* Gray 600 */
-    padding: 0.5rem 1.5rem;
-    border: none;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    transition: background-color 0.15s;
-}
-
-.cancel-button:hover {
-    background-color: #d1d5db; /* Gray 300 */
-}
-
-.save-button:disabled {
-    background-color: #9ca3af !important;
-    cursor: not-allowed;
-}
-
-/* --- Service List Section --- */
-.service-list-wrapper {
-    padding: 1rem;
-}
-
-.list-header {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #1f2937;
-    margin-bottom: 1.5rem;
-}
-
-.service-list {
-    list-style: none;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.service-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.25rem;
-    border-radius: 0.375rem;
-    border: 1px solid #e5e7eb; /* Gray 200 */
-    background-color: white;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    transition: border-color 0.2s;
-}
-
-.service-item.active {
-    border-left: 5px solid #10b981; /* Green */
-}
-
-.service-item.inactive {
-    border-left: 5px solid #9ca3af; /* Gray */
-    opacity: 0.8;
-}
-
-.service-info {
-    flex-grow: 1;
-}
-
-.service-name {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 0.25rem;
-}
-
-.service-meta {
-    font-size: 0.875rem;
-    color: #6b7280;
-}
-
-.service-status {
-    padding: 0.25rem 0.75rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    margin-right: 1rem;
-}
-
-.service-status.status-active {
-    background-color: #d1fae5; /* Green 100 */
-    color: #065f46; /* Green 800 */
-}
-
-.service-status.status-inactive {
-    background-color: #f3f4f6; /* Gray 100 */
-    color: #4b5563; /* Gray 600 */
-}
-
-.item-actions {
-    display: flex;
-    gap: 0.75rem;
-}
-
-.action-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: color 0.15s;
-}
-
-.edit-action {
-    color: #4f46e5;
-}
-
-.edit-action:hover {
-    color: #3730a3;
-}
-
-.delete-action {
-    color: #dc2626;
-}
-
-.delete-action:hover {
-    color: #7f1d1d;
-}
-
-/* --- Responsive Adjustments --- */
-@media (max-width: 1024px) {
-    .services-manager-container {
-        grid-template-columns: 1fr; /* Stack form and list on smaller screens */
-    }
+  }
 }

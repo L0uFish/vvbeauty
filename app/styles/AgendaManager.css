@@ -1,125 +1,182 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600&display=swap");
+
 /* --- Main Container --- */
 .agenda-manager {
-  padding: 1rem;
-  background-color: #fff;
+  font-family: "Inter", sans-serif;
+  background: #ffffff;
   border-radius: 0.75rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  animation: fadeIn 0.6s ease-in-out;
 }
 
 /* --- Search Bar --- */
 .search-bar {
-  padding: 0.75rem 1rem;
+  padding: 0.8rem 1rem;
   font-size: 1rem;
   width: 100%;
   max-width: 400px;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  background-color: #f9fafb;
-  margin-bottom: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background-color: #fdf2f8;
+  margin-bottom: 1.25rem;
+  transition: all 0.25s ease;
 }
 
 .search-bar:focus {
   outline: none;
-  border-color: #4f46e5;
+  border-color: #e88aab;
+  box-shadow: 0 0 0 3px rgba(232, 138, 171, 0.25);
 }
 
-/* --- Radio Buttons --- */
-.radio-buttons {
-  margin-top: 1rem;
+/* --- FILTER BAR --- */
+.filter-bar {
   display: flex;
-  flex-direction: row; /* Change from column to row to align radio buttons horizontally */
-  gap: 1.5rem; /* Add some space between radio buttons */
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+/* --- Elegant Segmented Buttons --- */
+.radio-buttons {
+  display: flex;
+  background: #fdf2f8;
+  border: 1px solid #fbcfe8;
+  border-radius: 9999px;
+  padding: 0.3rem;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .radio-buttons label {
-  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  color: #b23561;
+  font-size: 0.95rem;
+  font-weight: 500;
   cursor: pointer;
-  display: inline-block;
-  padding-left: 0;
-  position: relative;
-  font-weight: normal;
-  color: #333;
+  transition: all 0.25s ease;
+  user-select: none;
 }
 
-/* Hide the default radio button */
-.radio-buttons input[type="radio"] {
-  position: absolute;
-  left: -9999px;
+.radio-buttons label:hover {
+  background: rgba(250, 232, 244, 0.6);
 }
 
-/* Selected Style */
-.radio-buttons input[type="radio"]:checked + span {
-  font-weight: bold;
-  color: #4f46e5; /* Indigo color for selected option */
-  display: inline-block;
+.radio-buttons label.active {
+  background: linear-gradient(135deg, #e88aab, #b23561);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(178, 53, 97, 0.25);
 }
 
-/* Custom radio icon */
-.radio-buttons label::before {
-  content: '|   ';
-}
-
-/* --- Table Container --- */
+/* --- Table --- */
 .appointments-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 0.35rem;
   margin-top: 1.5rem;
+  transition: all 0.25s ease;
 }
 
-.appointments-table th, .appointments-table td {
+.appointments-table th,
+.appointments-table td {
   padding: 1rem;
   text-align: left;
-  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  border-bottom: 1px solid #f3f4f6;
 }
 
 .appointments-table th {
-  background-color: #f9fafb;
-  color: #4b5563;
   font-weight: 600;
+  color: #b23561;
+  cursor: pointer;
+  background: #fdf2f8;
+  border-bottom: 2px solid #f9a8d4;
+  user-select: none;
+  position: relative;
+  transition: background 0.2s;
+}
+
+.appointments-table th:hover {
+  background-color: #fce7f3;
+}
+
+.appointments-table tr {
+  border-radius: 0.5rem;
+  transition: background 0.25s, transform 0.15s;
 }
 
 .appointments-table tr:hover {
-  background-color: #f3f4f6;
+  background-color: #fdf2f8;
+  transform: scale(1.01);
 }
 
-/* --- Button Styling --- */
-button {
-  background-color: #4f46e5;
-  color: #ffffff;
+/* --- Grouped Date Headers --- */
+.date-group-header td {
+  background: #fff7fa;
+  color: #b23561;
+  font-weight: 600;
+  font-family: "Playfair Display", serif;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  border-top: 2px solid #fbcfe8;
+  border-bottom: 1px solid #fce7f3;
+}
+
+.date-separator {
+  height: 0.75rem;
+}
+
+/* --- Cancel Button --- */
+.cancel-btn {
+  background: #ef4444;
+  color: #fff;
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
   cursor: pointer;
-  font-size: 0.875rem;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: all 0.2s ease;
 }
 
-button:hover {
-  background-color: #4338ca;
+.cancel-btn:hover {
+  background: #dc2626;
   transform: scale(1.05);
 }
 
-button:disabled {
-  background-color: #e5e7eb;
-  cursor: not-allowed;
+/* --- Cancelled Rows --- */
+.cancelled-row {
+  text-decoration: line-through;
+  color: #9ca3af;
+  font-style: italic;
+  background-color: #fafafa;
+  transition: all 0.3s ease;
 }
 
-/* --- Red Delete Button --- */
-button.bg-red-600 {
-  background-color: #ef4444;
-  color: white;
+/* --- Sorting Arrows --- */
+th.sorted-asc::after {
+  content: "▲";
+  font-size: 0.75rem;
+  color: #b23561;
+  margin-left: 6px;
 }
 
-button.bg-red-600:hover {
-  background-color: #dc2626;
+th.sorted-desc::after {
+  content: "▼";
+  font-size: 0.75rem;
+  color: #b23561;
+  margin-left: 6px;
 }
 
-/* --- Table Header Styling for Sorting --- */
-th {
-  cursor: pointer;
+/* --- Animations --- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-
-th:hover {
-  background-color: #f3f4f6;
-}
-

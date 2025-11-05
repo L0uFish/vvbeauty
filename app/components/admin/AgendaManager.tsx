@@ -2,110 +2,156 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import '../../styles/AgendaManager.css'; // Import the dedicated CSS file
+import "../../styles/AgendaManager.css";
+
+type Appointment = {
+  id: string;
+  date: string;
+  time: string;
+  status: string;
+  services?: { name: string | null };
+  clients?: { full_name: string | null };
+};
 
 export default function AgendaManager() {
-  const [appointments, setAppointments] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [sortColumn, setSortColumn] = useState<"client" | "service" | "date" | "time">("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [filterOption, setFilterOption] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterOption, setFilterOption] = useState("all");
 
-  // Fetch the appointments from Supabase
   useEffect(() => {
     const fetchAppointments = async () => {
       const { data, error } = await supabase
         .from("appointments")
         .select("*, services(name), clients(full_name)")
-        .order("date", { ascending: true });
+        .order("date", { ascending: true })
+        .order("time", { ascending: true });
 
       if (error) {
         console.error("Error fetching appointments:", error);
         return;
       }
 
-      setAppointments(data);
+      setAppointments(data as Appointment[]);
     };
 
     fetchAppointments();
   }, []);
 
-  // Sort function
-  const sortTable = (column: string) => {
-    const sortedData = [...appointments];
-    const isAscending = sortDirection === "asc";
+  const handleSort = (column: "client" | "service" | "date" | "time") => {
+    const isAscending = sortColumn === column ? sortDirection === "asc" : true;
+    setSortColumn(column);
+    setSortDirection(isAscending ? "desc" : "asc");
 
-    sortedData.sort((a, b) => {
-      let aValue = a[column];
-      let bValue = b[column];
+    const sorted = [...appointments].sort((a, b) => {
+      let aValue = "";
+      let bValue = "";
 
-      // If the column is a date, convert them to Date objects for correct comparison
-      if (column === "date") {
-        aValue = new Date(aValue);
-        bValue = new Date(bValue);
+      switch (column) {
+        case "client":
+          aValue = a.clients?.full_name?.toLowerCase() || "";
+          bValue = b.clients?.full_name?.toLowerCase() || "";
+          break;
+        case "service":
+          aValue = a.services?.name?.toLowerCase() || "";
+          bValue = b.services?.name?.toLowerCase() || "";
+          break;
+        case "date":
+          aValue = a.date;
+          bValue = b.date;
+          break;
+        case "time":
+          aValue = a.time;
+          bValue = b.time;
+          break;
       }
 
-      if (aValue < bValue) {
-        return isAscending ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return isAscending ? 1 : -1;
-      }
+      if (aValue < bValue) return isAscending ? -1 : 1;
+      if (aValue > bValue) return isAscending ? 1 : -1;
       return 0;
     });
 
-    setAppointments(sortedData);
-    setSortDirection(isAscending ? "desc" : "asc");
+    setAppointments(sorted);
   };
 
-  // Filter appointments based on search term
-  const filteredAppointments = appointments.filter((appointment) => {
+  // Filter logic (unchanged)
+  const filteredAppointments = appointments.filter((a) => {
+    const client = a.clients?.full_name?.toLowerCase() || "";
+    const service = a.services?.name?.toLowerCase() || "";
     return (
-      (appointment["clients.full_name"]?.toLowerCase() ?? "")
-        .includes(searchTerm.toLowerCase()) ||
-      (appointment["services.name"]?.toLowerCase() ?? "")
-        .includes(searchTerm.toLowerCase()) ||
-      (appointment.date?.toLowerCase() ?? "")
-        .includes(searchTerm.toLowerCase()) ||
-      (appointment.time?.toLowerCase() ?? "")
-        .includes(searchTerm.toLowerCase())
+      client.includes(searchTerm.toLowerCase()) ||
+      service.includes(searchTerm.toLowerCase()) ||
+      a.date.includes(searchTerm) ||
+      a.time.includes(searchTerm)
     );
   });
 
-  // Filter appointments based on selected filter option (Today, Next Day, etc.)
-  const filterAppointments = () => {
-    const today = new Date();
-    const nextDay = new Date();
-    nextDay.setDate(today.getDate() + 1);
-    const nextWeek = new Date();
-    nextWeek.setDate(today.getDate() + 7);
+  const today = new Date();
+  const nextDay = new Date(today);
+  nextDay.setDate(today.getDate() + 1);
+  const nextWeek = new Date(today);
+  nextWeek.setDate(today.getDate() + 7);
 
-    if (filterOption === "today") {
-      return filteredAppointments.filter(
-        (appointment) => new Date(appointment.date).toDateString() === today.toDateString()
-      );
-    } else if (filterOption === "nextDay") {
-      return filteredAppointments.filter(
-        (appointment) => new Date(appointment.date).toDateString() === nextDay.toDateString()
-      );
-    } else if (filterOption === "nextWeek") {
-      return filteredAppointments.filter(
-        (appointment) =>
-          new Date(appointment.date) >= today && new Date(appointment.date) <= nextWeek
-      );
-    } else if (filterOption === "allFuture") {
-      return filteredAppointments.filter((appointment) => new Date(appointment.date) >= today);
-    } else if (filterOption === "past") {
-      return filteredAppointments.filter((appointment) => new Date(appointment.date) < today);
-    } else if (filterOption === "all") {
-      return filteredAppointments; // Show all appointments if no specific filter is selected
-    } else {
-      return filteredAppointments; // Show all appointments if no specific filter is selected
-    }
+  const filterAppointments = () => {
+    return filteredAppointments.filter((a) => {
+      const d = new Date(a.date);
+      switch (filterOption) {
+        case "today":
+          return d.toDateString() === today.toDateString();
+        case "nextDay":
+          return d.toDateString() === nextDay.toDateString();
+        case "nextWeek":
+          return d >= today && d <= nextWeek;
+        case "allFuture":
+          return d >= today;
+        case "past":
+          return d < today;
+        default:
+          return true;
+      }
+    });
   };
+
+  const cancelAppointment = async (appointment: Appointment) => {
+    const confirmCancel = window.confirm(
+      `Weet je zeker dat je de afspraak van ${appointment.clients?.full_name || "Onbekende klant"} wilt annuleren?`
+    );
+    if (!confirmCancel) return;
+
+    const { error } = await supabase
+      .from("appointments")
+      .update({ status: "cancelled" })
+      .eq("id", appointment.id);
+
+    if (error) {
+      console.error("Error cancelling appointment:", error);
+      alert("Er ging iets mis bij het annuleren.");
+      return;
+    }
+
+    setAppointments((prev) =>
+      prev.map((a) => (a.id === appointment.id ? { ...a, status: "cancelled" } : a))
+    );
+  };
+
+  const groupedByDate =
+    sortColumn === "date"
+      ? filterAppointments().reduce((acc: Record<string, Appointment[]>, a) => {
+          const dateLabel = new Date(a.date).toLocaleDateString("en-GB", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          });
+          if (!acc[dateLabel]) acc[dateLabel] = [];
+          acc[dateLabel].push(a);
+          return acc;
+        }, {})
+      : { All: filterAppointments() };
 
   return (
     <div className="agenda-manager">
-      {/* Search bar */}
       <input
         type="text"
         placeholder="Search appointments..."
@@ -114,90 +160,91 @@ export default function AgendaManager() {
         className="search-bar"
       />
 
-      {/* Filter options */}
       <div className="radio-buttons">
-        <label
-          onClick={() => setFilterOption("today")}
-          className={filterOption === "today" ? "active" : ""}
-        >
-          Today
-        </label>
-        <label
-          onClick={() => setFilterOption("nextDay")}
-          className={filterOption === "nextDay" ? "active" : ""}
-        >
-          Next Day
-        </label>
-        <label
-          onClick={() => setFilterOption("nextWeek")}
-          className={filterOption === "nextWeek" ? "active" : ""}
-        >
-          Next Week
-        </label>
-        <label
-          onClick={() => setFilterOption("allFuture")}
-          className={filterOption === "allFuture" ? "active" : ""}
-        >
-          All Future Appointments
-        </label>
-        <label
-          onClick={() => setFilterOption("past")}
-          className={filterOption === "past" ? "active" : ""}
-        >
-          Past Appointments
-        </label>
-        <label
-          onClick={() => setFilterOption("all")}
-          className={filterOption === "all" ? "active" : ""}
-        >
-          All Appointments
-        </label>
+        {["today", "nextDay", "nextWeek", "allFuture", "past", "all"].map((opt) => (
+          <label
+            key={opt}
+            onClick={() => setFilterOption(opt)}
+            className={filterOption === opt ? "active" : ""}
+          >
+            {opt === "today"
+              ? "Today"
+              : opt === "nextDay"
+              ? "Next Day"
+              : opt === "nextWeek"
+              ? "Next Week"
+              : opt === "allFuture"
+              ? "All Future"
+              : opt === "past"
+              ? "Past"
+              : "All"}
+          </label>
+        ))}
       </div>
 
-      {/* Table */}
       <table className="appointments-table">
         <thead>
           <tr>
-            <th onClick={() => sortTable("clients.full_name")}>Name</th>
-            <th onClick={() => sortTable("services.name")}>Service</th>
-            <th onClick={() => sortTable("date")}>Date</th>
-            <th onClick={() => sortTable("time")}>Time</th>
+            <th onClick={() => handleSort("client")}>
+              Name {sortColumn === "client" && (sortDirection === "asc" ? "↑" : "↓")}
+            </th>
+            <th onClick={() => handleSort("service")}>
+              Service {sortColumn === "service" && (sortDirection === "asc" ? "↑" : "↓")}
+            </th>
+            <th onClick={() => handleSort("date")}>
+              Date {sortColumn === "date" && (sortDirection === "asc" ? "↑" : "↓")}
+            </th>
+            <th onClick={() => handleSort("time")}>
+              Time {sortColumn === "time" && (sortDirection === "asc" ? "↑" : "↓")}
+            </th>
             <th>Status</th>
           </tr>
         </thead>
+
         <tbody>
-            {filterAppointments().map((appointment: any) => {
-                const { full_name } = appointment["clients"];
-                const { name } = appointment["services"];
-
-                const formattedDate = new Date(appointment.date).toLocaleDateString(
-                "en-GB",
-                { year: "numeric", month: "long", day: "numeric" }
-                );
-
-                // Check if the appointment is canceled
-                const isCancelled = appointment.status === "cancelled";
-
-                return (
-                <tr
-                    key={appointment.id}
-                    style={{
-                    textDecoration: isCancelled ? "line-through" : "none",
-                    color: isCancelled ? "#9ca3af" : "inherit", // Grayish color for canceled
-                    fontStyle: isCancelled ? "italic" : "normal", // Italic for canceled
-                    }}
-                >
-                    <td>{full_name}</td>
-                    <td>{name}</td>
-                    <td>{formattedDate}</td>
-                    <td>{appointment.time}</td>
-                    <td>
-                    {isCancelled ? "Canceled" : ""}
-                    </td>
+          {Object.entries(groupedByDate).map(([dateGroup, groupAppointments]) => (
+            <>
+              {sortColumn === "date" && (
+                <tr className="date-group-header" key={dateGroup}>
+                  <td colSpan={5}>{dateGroup}</td>
                 </tr>
+              )}
+              {groupAppointments.map((a) => {
+                const isCancelled = a.status === "cancelled";
+                return (
+                  <tr
+                    key={a.id}
+                    className={isCancelled ? "cancelled-row" : ""}
+                  >
+                    <td>{a.clients?.full_name || "Onbekende klant"}</td>
+                    <td>{a.services?.name || "Verwijderde service"}</td>
+                    <td>
+                      {new Date(a.date).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td>{a.time}</td>
+                    <td>
+                      {isCancelled ? (
+                        "Canceled"
+                      ) : (
+                        <button
+                          className="cancel-btn"
+                          onClick={() => cancelAppointment(a)}
+                        >
+                          Annuleren
+                        </button>
+                      )}
+                    </td>
+                  </tr>
                 );
-            })}
-            </tbody>
+              })}
+              <tr className="date-separator" />
+            </>
+          ))}
+        </tbody>
       </table>
     </div>
   );

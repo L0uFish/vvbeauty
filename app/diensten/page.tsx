@@ -10,12 +10,13 @@ export default async function Boeking() {
   // ✅ create Supabase client for server context
   const supabase = await getServerSupabase();
 
-  // ✅ fetch all active services ordered by display order
+  // ✅ fetch all active services ordered by category_order + display_order
   const { data: services, error } = await supabase
     .from("services")
     .select("*")
     .eq("active", true)
-    .order("display_order");
+    .order("category_order", { ascending: true })
+    .order("display_order", { ascending: true });
 
   if (error || !services) {
     console.error("Supabase error:", error);
@@ -42,6 +43,20 @@ export default async function Boeking() {
     return acc;
   }, {});
 
+  // ✅ get unique categories sorted by their lowest category_order value
+  const sortedCategories = Object.keys(grouped).sort((a, b) => {
+    const aOrder =
+      grouped[a].length > 0
+        ? Math.min(...grouped[a].map((s) => s.category_order ?? 0))
+        : 0;
+    const bOrder =
+      grouped[b].length > 0
+        ? Math.min(...grouped[b].map((s) => s.category_order ?? 0))
+        : 0;
+    return aOrder - bOrder;
+  });
+
+
   return (
     <main className="boeking-container">
       <Header />
@@ -57,11 +72,11 @@ export default async function Boeking() {
 
       {/* === SERVICE LIST === */}
       <div className="page-container">
-        {Object.entries(grouped).map(([category, items]) => (
+        {sortedCategories.map((category) => (
           <section key={category}>
             <h2>{category}</h2>
             <div className="service-grid">
-              {items.map((s) => (
+              {grouped[category].map((s) => (
                 <Link
                   key={s.id}
                   href={`/plannen?service=${s.id}`}
