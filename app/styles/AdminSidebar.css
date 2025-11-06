@@ -16,7 +16,7 @@
   box-shadow: 4px 0 10px rgba(0, 0, 0, 0.08);
   border-right: 1px solid rgba(178, 53, 97, 0.15);
   transition: transform 0.3s ease-in-out;
-  z-index: 50;
+  z-index: 100;
 }
 
 /* --- Header --- */
@@ -126,7 +126,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
-  z-index: 40;
+  z-index: 90;
 }
 
 .mobile-overlay.show {
