@@ -120,19 +120,6 @@
   background: #d94a7a;
 }
 
-/* --- Mobile Overlay --- */
-.mobile-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 90;
-}
-
-.mobile-overlay.show {
-  display: block;
-}
-
 /* --- Prevent background scroll when menu open --- */
 body.menu-open {
   overflow: hidden;
