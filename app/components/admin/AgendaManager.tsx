@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import "../../styles/AgendaManager.css";
+import React from "react";
 
 type Appointment = {
   id: string;
@@ -154,7 +155,7 @@ export default function AgendaManager() {
     <div className="agenda-manager">
       <input
         type="text"
-        placeholder="Search appointments..."
+        placeholder="Zoeken op naam..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         className="search-bar"
@@ -201,50 +202,55 @@ export default function AgendaManager() {
           </tr>
         </thead>
 
-        <tbody>
-          {Object.entries(groupedByDate).map(([dateGroup, groupAppointments]) => (
-            <>
-              {sortColumn === "date" && (
-                <tr className="date-group-header" key={dateGroup}>
-                  <td colSpan={5}>{dateGroup}</td>
-                </tr>
-              )}
-              {groupAppointments.map((a) => {
-                const isCancelled = a.status === "cancelled";
-                return (
-                  <tr
-                    key={a.id}
-                    className={isCancelled ? "cancelled-row" : ""}
-                  >
-                    <td>{a.clients?.full_name || "Onbekende klant"}</td>
-                    <td>{a.services?.name || "Verwijderde service"}</td>
-                    <td>
-                      {new Date(a.date).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </td>
-                    <td>{a.time}</td>
-                    <td>
-                      {isCancelled ? (
-                        "Canceled"
-                      ) : (
-                        <button
-                          className="cancel-btn"
-                          onClick={() => cancelAppointment(a)}
-                        >
-                          Annuleren
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
+<tbody>
+  {Object.entries(groupedByDate).map(([dateGroup, groupAppointments]) => (
+    <React.Fragment key={dateGroup}>
+      {sortColumn === "date" && (
+        <tr className="date-group-header">
+          <td colSpan={5}>{dateGroup}</td>
+        </tr>
+      )}
+
+      {groupAppointments.map((a) => {
+        const isCancelled = a.status === "cancelled";
+        return (
+          <tr
+            key={a.id}
+            className={isCancelled ? "cancelled-row" : ""}
+          >
+            <td>{a.clients?.full_name || "Onbekende klant"}</td>
+            <td>{a.services?.name || "Verwijderde service"}</td>
+            <td>
+              {new Date(a.date).toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
               })}
-              <tr className="date-separator" />
-            </>
-          ))}
-        </tbody>
+            </td>
+            <td>{a.time}</td>
+            <td>
+              {isCancelled ? (
+                "Canceled"
+              ) : (
+                <button
+                  className="cancel-btn"
+                  onClick={() => cancelAppointment(a)}
+                >
+                  ×
+                </button>
+              )}
+            </td>
+          </tr>
+        );
+      })}
+
+      {/* Soft separator row for spacing between date groups */}
+      <tr className="date-separator" key={`sep-${dateGroup}`}>
+        <td colSpan={5}></td>
+      </tr>
+    </React.Fragment>
+  ))}
+</tbody>
       </table>
     </div>
   );

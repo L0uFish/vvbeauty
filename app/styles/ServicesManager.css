@@ -1,10 +1,13 @@
-/* === Main Container === */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600&display=swap");
+
+/* === Root Layout === */
 .services-manager {
-  padding: 1rem;
-  background-color: #ffffff;
+  font-family: "Inter", sans-serif;
+  background: #fff;
   border-radius: 0.75rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  animation: fadeIn 0.6s ease;
 }
 
 /* === Header Bar === */
@@ -16,192 +19,229 @@
 }
 
 .header-bar h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #111827;
+  font-family: "Playfair Display", serif;
+  font-size: 1.8rem;
+  color: #b23561;
+  margin: 0;
 }
 
 .add-btn {
-  background-color: #4f46e5;
-  color: #fff;
+  background: linear-gradient(135deg, #e88aab, #b23561);
   border: none;
-  padding: 0.6rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.95rem;
-  font-weight: 500;
+  color: white;
+  font-weight: 600;
+  padding: 0.6rem 1.2rem;
+  border-radius: 9999px;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: all 0.25s ease;
+  box-shadow: 0 3px 6px rgba(178, 53, 97, 0.25);
 }
 
 .add-btn:hover {
-  background-color: #4338ca;
+  background: linear-gradient(135deg, #b23561, #e88aab);
   transform: scale(1.05);
 }
 
 /* === Category Section === */
 .category-section {
+  background: #fff8fb;
+  border: 1px solid #fbcfe8;
+  border-radius: 0.75rem;
   margin-bottom: 2rem;
-  background-color: #f9fafb;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  transition: background-color 0.2s;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 2px 6px rgba(178, 53, 97, 0.05);
+  transition: all 0.25s ease;
 }
 
-.category-section.dragging {
-  background-color: #eef2ff;
+.category-section:hover {
+  transform: scale(1.01);
+  box-shadow: 0 4px 10px rgba(178, 53, 97, 0.1);
 }
 
-/* === Category Title === */
 .category-title {
-  font-size: 1.2rem;
+  font-family: "Playfair Display", serif;
+  font-size: 1.4rem;
   font-weight: 600;
-  color: #4f46e5;
-  display: flex;
-  align-items: center;
+  color: #b23561;
   margin-bottom: 1rem;
   cursor: grab;
-}
-
-.category-title:hover {
-  color: #4338ca;
-}
-
-.category-title::before {
-  content: "⋮⋮";
-  color: #9ca3af;
-  margin-right: 0.5rem;
-  cursor: grab;
-}
-
-/* === Table Styling === */
-.services-table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: white;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.services-table th,
-.services-table td {
-  padding: 0.75rem 1rem;
-  text-align: left;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.services-table th {
-  background-color: #f3f4f6;
-  color: #374151;
-  font-weight: 600;
-  font-size: 0.95rem;
   user-select: none;
 }
 
-.services-table tr:hover {
-  background-color: #f9fafb;
+.category-title:active {
+  cursor: grabbing;
 }
 
-/* === Row Styles === */
-.service-row {
-  transition: background-color 0.2s, transform 0.2s;
+/* === Table === */
+.services-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.4rem;
+  transition: all 0.25s ease;
 }
 
-.service-row.dragging {
-  background-color: #eef2ff;
-  transform: scale(1.01);
+.services-table th {
+  background: #fdf2f8;
+  color: #b23561;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.75rem;
+  border-bottom: 2px solid #f9a8d4;
+  user-select: none;
 }
 
-/* Inactive services appear dimmed */
-.service-row.inactive {
-  color: #9ca3af;
-  font-style: italic;
-  background-color: #fafafa;
+.services-table td {
+  background: #fff;
+  padding: 0.75rem;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 0.95rem;
+  color: #333;
+  vertical-align: middle;
+  transition: background 0.2s;
 }
 
-/* === Active Toggle === */
+.services-table tr:hover td {
+  background: #fdf2f8;
+}
+
+/* === Active Indicator === */
 .services-table td:first-child {
   text-align: center;
   cursor: pointer;
-  width: 50px;
+  font-size: 1.1rem;
 }
 
-.services-table td:first-child:hover {
-  background-color: #eef2ff;
-  transform: scale(1.05);
-}
-
-/* === Inline Editing Inputs === */
-.services-table input[type="text"],
-.services-table input[type="number"] {
+/* === Inline Editing === */
+.services-table input {
   width: 100%;
-  padding: 0.4rem 0.6rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
   font-size: 0.9rem;
-  box-sizing: border-box;
+  color: #333;
+  transition: all 0.2s ease;
 }
 
 .services-table input:focus {
+  border-color: #e88aab;
   outline: none;
-  border-color: #4f46e5;
-  background-color: #eef2ff;
-}
-
-/* === Action Buttons === */
-.actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.25rem;
-}
-
-.delete-btn {
-  background-color: transparent;
-  color: #ef4444;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  transition: color 0.2s, transform 0.2s;
-}
-
-.delete-btn:hover {
-  color: #dc2626;
-  transform: scale(1.1);
+  box-shadow: 0 0 0 3px rgba(232, 138, 171, 0.25);
 }
 
 /* === Drag Handle === */
 .drag-handle {
   cursor: grab;
-  color: #9ca3af;
+  color: #b23561;
   font-size: 1.2rem;
   margin-left: 0.5rem;
   user-select: none;
+  transition: transform 0.2s ease;
 }
 
 .drag-handle:hover {
-  color: #4f46e5;
+  transform: scale(1.2);
 }
 
-/* === Responsive === */
+.dragging {
+  background-color: #fde8f1 !important;
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(232, 138, 171, 0.3);
+}
+
+/* === Delete Button === */
+.delete-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.delete-btn:hover {
+  color: #dc2626;
+  transform: scale(1.2);
+}
+
+/* === Actions Cell === */
+.actions {
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* === Animation === */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === Responsive Adjustments === */
 @media (max-width: 768px) {
-  .header-bar {
-    flex-direction: column;
-    align-items: flex-start;
+  .services-manager {
+    padding: 1.25rem;
   }
 
-  .add-btn {
-    margin-top: 0.75rem;
+  .category-title {
+    font-size: 1.2rem;
   }
 
   .services-table th,
   .services-table td {
-    padding: 0.5rem;
     font-size: 0.85rem;
+    padding: 0.6rem;
   }
 
-  .drag-handle {
-    font-size: 1rem;
+  .actions {
+    flex-direction: row;
+    gap: 0.25rem;
   }
+
+  .add-btn {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+  }
+}
+
+/* === Sweet Shadow and Glow Theme === */
+.services-table tr td {
+  border-radius: 0.25rem;
+}
+
+.services-table tr:hover {
+  background-color: #fff7fa;
+}
+
+.services-table tr td:first-child {
+  font-weight: 600;
+}
+
+.services-table tr td:nth-child(2) {
+  color: #b23561;
+  font-weight: 500;
+}
+
+/* === Subtle Table Animation === */
+.services-table tbody tr {
+  transition: all 0.25s ease;
+}
+
+.services-table tbody tr:hover {
+  transform: scale(1.005);
+}
+
+/* === Scroll Behavior for Large Tables === */
+.services-manager {
+  overflow-x: auto;
+}
+
+.services-table {
+  min-width: 800px;
 }

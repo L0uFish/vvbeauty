@@ -1,0 +1,198 @@
+/* -------------------------------------------------- */
+/* 1. Modal Overlay and Positioning */
+/* -------------------------------------------------- */
+
+.modal-overlay {
+    /* Fixed position covers the entire viewport */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* Dark, semi-transparent background for contrast and focus */
+    background-color: rgba(0, 0, 0, 0.6); 
+    
+    /* Ensure modal is on top of all other content */
+    z-index: 1000; 
+    
+    /* Center the modal content */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* Smooth transition for fade-in effect */
+    transition: opacity 0.3s ease;
+}
+
+.modal-content {
+    /* Modal container */
+    background-color: #ffffff;
+    color: #333333;
+    
+    /* Max width helps readability and prevents overstretching */
+    max-width: 90%; 
+    width: 500px;
+    
+    /* Padding for internal content spacing */
+    padding: 1.5rem;
+    
+    /* Rounded corners for a modern look */
+    border-radius: 8px;
+    
+    /* Accessible shadow for depth and separation */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    
+    /* Ensure scrollability if content overflows */
+    overflow-y: auto; 
+    max-height: 90vh; /* Prevents modal from running off-screen */
+    
+    /* Animation for appearing in the center */
+    transform: scale(1);
+    opacity: 1;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Optional: Animation for when the modal is closed/unmounted */
+/* You would need to apply a class like .modal-exiting in React for this */
+/*
+.modal-overlay.hidden {
+    opacity: 0;
+}
+.modal-overlay.hidden .modal-content {
+    transform: scale(0.95);
+}
+*/
+
+/* -------------------------------------------------- */
+/* 2. Typography and Headings */
+/* -------------------------------------------------- */
+
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2c3e50; /* A strong, legible header color */
+    border-bottom: 1px solid #eeeeee;
+    padding-bottom: 0.5rem;
+}
+
+/* -------------------------------------------------- */
+/* 3. Form Elements and Input Accessibility */
+/* -------------------------------------------------- */
+
+.modal-content label {
+    display: block;
+    margin-top: 1rem;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+    color: #555555;
+    font-size: 0.95rem;
+}
+
+.modal-content input[type="time"],
+.modal-content textarea {
+    width: 100%;
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    font-size: 1rem;
+    box-sizing: border-box; /* Includes padding and border in element's total width and height */
+    transition: border-color 0.2s;
+}
+
+.modal-content input[type="time"]:focus,
+.modal-content textarea:focus {
+    border-color: #3498db; /* Clear focus indicator */
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
+}
+
+/* Disabled input styling for accessibility */
+.modal-content input:disabled,
+.modal-content input[disabled] {
+    background-color: #f7f7f7;
+    cursor: not-allowed;
+    color: #aaaaaa;
+    border-color: #e0e0e0;
+}
+
+
+/* -------------------------------------------------- */
+/* 4. Action Buttons (General/Override Modal) */
+/* -------------------------------------------------- */
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end; /* Pushes buttons to the right */
+    gap: 0.8rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eeeeee;
+}
+
+.modal-actions button {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, opacity 0.2s;
+    min-width: 100px; /* Ensures consistent button sizing */
+}
+
+/* Primary Save Button */
+.modal-actions button:not([style*="background-color"]) {
+    background-color: #3498db; /* Blue */
+    color: white;
+}
+.modal-actions button:not([style*="background-color"]):hover:not(:disabled) {
+    background-color: #2980b9;
+}
+
+/* Secondary Cancel Button */
+.modal-actions button:last-child {
+    background-color: #f0f0f0;
+    color: #666666;
+}
+.modal-actions button:last-child:hover:not(:disabled) {
+    background-color: #e0e0e0;
+}
+
+/* Reset Button (Using inline style in JS, but here's a default) */
+.modal-actions button[style*="background-color: rgb(204, 0, 0)"] {
+    /* Matches the red reset button style from the previous code */
+    background-color: #cc0000 !important;
+    color: white !important;
+}
+.modal-actions button[style*="background-color: rgb(204, 0, 0)"]:hover:not(:disabled) {
+    background-color: #a00000 !important;
+}
+
+
+/* Disabled State for all buttons (Accessibility) */
+.modal-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* -------------------------------------------------- */
+/* 5. General Hours Specific Layout */
+/* -------------------------------------------------- */
+
+.modal-content div[key] {
+    padding: 0.5rem 0;
+    border-bottom: 1px dotted #dddddd;
+}
+
+.modal-content div[key]:last-of-type {
+    border-bottom: none;
+}
+
+.modal-content div[key] strong {
+    font-size: 1.1rem;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import AdminSidebar from "../components/admin/AdminSidebar";
 import UsersManager from "../components/admin/UsersManager";
 import AgendaManager from "../components/admin/AgendaManager";
-import OpeningHoursManager from "../components/admin/OpeningHoursManager";
+import OpeningHoursManager from "../components/admin/AvailabilityManager";
 import ServicesManager from "../components/admin/ServicesManager";
 import '../styles/AdminPage.css'; // Import the dedicated CSS file
 
