@@ -121,14 +121,6 @@ export default function LoginModal({
             <span className="social-icon google" />
             <span>Sign in with Google</span>
           </button>
-          <button
-            className="social-btn social-facebook"
-            onClick={() => oauth("facebook")}
-            disabled={loading}
-          >
-            <span className="social-icon facebook" />
-            <span>Sign in with Facebook</span>
-          </button>
         </div>
 
         <div className="divider">
