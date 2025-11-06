@@ -3,6 +3,7 @@ import ActionButtons from "./components/ActionButtons";
 import "./styles/home.css";
 import Header from "./components/LoginBtn";
 import "./styles/HeroCarousel.css"
+import BrownieEasterEgg from "./components/BrownieEasterEgg";
 
 export default function Home() {
   return (
@@ -19,6 +20,7 @@ export default function Home() {
       <section className="action-section">
         <ActionButtons />
       </section>
+      <BrownieEasterEgg />
     </main>
   );
 }
