@@ -1,11 +1,9 @@
-// components/admin/AdminSidebar.tsx
 "use client";
 
-import React from 'react';
-import Link from 'next/link'; // Use Link for navigation outside of the current component's state change
-import '../../styles/AdminSidebar.css'; // Import the dedicated CSS file
+import React, { useState } from "react";
+import Link from "next/link";
+import "../../styles/AdminSidebar.css";
 
-// Define the possible tabs (matching the keys in page.tsx)
 export type AdminTab = "gebruikers" | "agenda" | "openingstijden" | "diensten";
 
 interface AdminSidebarProps {
@@ -13,36 +11,51 @@ interface AdminSidebarProps {
   setActiveTab: (tab: AdminTab) => void;
 }
 
-const tabs: { key: AdminTab; label: string; icon: string }[] = [
+const tabs = [
   { key: "gebruikers", label: "Gebruikers", icon: "👥" },
-  { key: "agenda", label: "Agenda", icon: "📅" },
-  { key: "openingstijden", label: "Openingstijden", icon: "⏰" },
+  { key: "agenda", label: "Afspraken", icon: "📝" },
+  { key: "openingstijden", label: "Openingstijden", icon: "📅" },
   { key: "diensten", label: "Diensten", icon: "🛠️" },
-];
+] as const;
 
 export default function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleToggle = () => setIsOpen(!isOpen);
+  const handleSelect = (tabKey: AdminTab) => {
+    setActiveTab(tabKey);
+    setIsOpen(false);
+  };
+
   return (
-    <nav className="admin-sidebar">
-      <h2 className="sidebar-header">Admin</h2>
-      <div className="sidebar-menu">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`sidebar-button ${activeTab === tab.key ? "active" : ""}`}
-          >
-            <span className="sidebar-icon">{tab.icon}</span>
-            {tab.label}
-          </button>
-        ))}
-      </div>
-      
-      {/* Optional: Add a link back to the main site for easy switching */}
-      <div className="sidebar-footer">
-        <Link href="/" className="back-to-site">
+    <>
+      {/* Mobile Menu Button */}
+      <button className="mobile-menu-btn" onClick={handleToggle}>
+        {isOpen ? "✖" : "☰"}
+      </button>
+
+      {/* Sidebar */}
+      <nav className={`admin-sidebar ${isOpen ? "open" : ""}`}>
+        <h2 className="sidebar-header">Admin</h2>
+        <div className="sidebar-menu">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => handleSelect(tab.key)}
+              className={`sidebar-button ${activeTab === tab.key ? "active" : ""}`}
+            >
+              <span className="sidebar-icon">{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="sidebar-footer">
+          <Link href="/" className="back-to-site">
             ← Terug naar Website
-        </Link>
-      </div>
-    </nav>
+          </Link>
+        </div>
+      </nav>
+    </>
   );
 }

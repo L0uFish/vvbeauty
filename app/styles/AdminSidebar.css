@@ -1,100 +1,153 @@
-/* --- Base Sidebar Structure --- */
+/* --- Base Sidebar --- */
 .admin-sidebar {
-    position: sticky;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 250px;
-    background-color: #1f2937;
-    color: #f9fafb;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-    z-index: 10;
+  position: sticky;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 260px;
+  background: linear-gradient(180deg, #fce7ef 0%, #fff 100%);
+  color: #5a0031;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.08);
+  border-right: 1px solid rgba(178, 53, 97, 0.15);
+  transition: transform 0.3s ease-in-out;
+  z-index: 50;
 }
 
-/* --- Header Styling --- */
+/* --- Header --- */
 .sidebar-header {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #374151;
-    color: #d1d5db;
-    text-align: center;
+  font-family: "Playfair Display", serif;
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(178, 53, 97, 0.25);
+  text-align: center;
+  color: #b23561;
 }
 
-/* --- Menu Links Container --- */
+/* --- Menu Buttons --- */
 .sidebar-menu {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-grow: 1;
 }
 
-/* --- Button Styling (Default) --- */
 .sidebar-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border-radius: 0.5rem;
-    color: #9ca3af;
-    text-align: left;
-    transition: background-color 0.2s, color 0.2s;
-    font-size: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  color: #8b5b70;
+  text-align: left;
+  transition: background-color 0.25s ease, color 0.25s ease, transform 0.15s ease;
+  font-size: 1rem;
 }
 
-/* --- Button Styling (Hover State) --- */
 .sidebar-button:hover {
-    background-color: #374151;
-    color: #f9fafb;
+  background-color: rgba(217, 74, 122, 0.1);
+  color: #b23561;
+  transform: translateX(2px);
 }
 
-/* --- Button Styling (Active State) --- */
 .sidebar-button.active {
-    background-color: #4f46e5;
-    color: #ffffff;
-    font-weight: 500;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: #d94a7a;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 3px 6px rgba(217, 74, 122, 0.25);
 }
 
-/* --- Icon Spacing --- */
 .sidebar-icon {
-    margin-right: 0.75rem;
-    font-size: 1.2em;
+  margin-right: 0.75rem;
+  font-size: 1.2em;
 }
 
-/* --- Footer/Return Link --- */
+/* --- Footer Link --- */
 .sidebar-footer {
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 1px solid #374151;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(178, 53, 97, 0.15);
 }
 
 .back-to-site {
-    display: block;
-    text-align: center;
-    color: #a5b4fc;
-    text-decoration: none;
-    padding: 0.5rem;
-    border-radius: 0.375rem;
-    transition: color 0.2s, background-color 0.2s;
+  display: block;
+  text-align: center;
+  color: #b23561;
+  text-decoration: none;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background-color: rgba(178, 53, 97, 0.05);
+  transition: all 0.25s ease;
 }
 
 .back-to-site:hover {
-    color: #ffffff;
-    background-color: #374151;
+  background-color: #b23561;
+  color: #fff;
 }
 
-/* --- Responsive Adjustments --- */
+/* --- Mobile Toggle Button --- */
+.mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #b23561;
+  color: #fff;
+  font-size: 1.5rem;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  z-index: 60;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease;
+}
+
+.mobile-menu-btn:hover {
+  background: #d94a7a;
+}
+
+/* --- Mobile Layout --- */
 @media (max-width: 768px) {
-    .admin-sidebar {
-        width: 200px;
-    }
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: auto;
+    width: 100%;
+    transform: translateY(-120%);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .admin-sidebar.open {
+    transform: translateY(0);
+  }
+
+  .sidebar-header {
+    font-size: 1.2rem;
+  }
+
+  .sidebar-menu {
+    gap: 0.3rem;
+  }
+
+  .sidebar-footer {
+    border-top: none;
+    margin-top: 1rem;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+  }
 }
