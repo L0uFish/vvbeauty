@@ -97,3 +97,109 @@ datalist option {
   font-family: "Inter", sans-serif;
   padding: 0.25rem;
 }
+
+/* === RESPONSIVE DESIGN FOR MODAL === */
+
+/* Tablet screens (≤1024px) */
+@media (max-width: 1024px) {
+  .modal-content {
+    width: 85%;
+    max-width: 420px;
+    padding: 1.75rem;
+  }
+
+  .modal-title {
+    font-size: 1.15rem;
+  }
+
+  input,
+  textarea {
+    font-size: 0.95rem;
+    padding: 0.55rem;
+  }
+
+  button[type="submit"] {
+    font-size: 0.95rem;
+    padding: 0.55rem;
+  }
+}
+
+/* Mobile screens (≤768px) */
+@media (max-width: 768px) {
+  .modal-overlay {
+    align-items: flex-end; /* slide-up feel on phones */
+    padding: 1rem;
+  }
+
+  .modal-content {
+    width: 100%;
+    max-width: none;
+    border-radius: 1rem 1rem 0 0; /* top-rounded sheet */
+    padding: 1.25rem;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
+  }
+
+  .modal-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .modal-close {
+    top: 0.5rem;
+    right: 0.5rem;
+    font-size: 1.25rem;
+  }
+
+  input,
+  textarea {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  textarea {
+    min-height: 70px;
+  }
+
+  button[type="submit"] {
+    width: 100%;
+    padding: 0.7rem;
+    font-size: 1rem;
+    border-radius: 0.6rem;
+  }
+
+  .error-message,
+  .success-message {
+    font-size: 0.9rem;
+  }
+}
+
+/* Extra-small screens (≤480px) */
+@media (max-width: 480px) {
+  .modal-overlay {
+    padding: 0.5rem;
+  }
+
+  .modal-content {
+    padding: 1rem;
+    border-radius: 1rem 1rem 0 0;
+  }
+
+  .modal-title {
+    font-size: 1rem;
+  }
+
+  input,
+  textarea {
+    font-size: 0.9rem;
+    padding: 0.45rem 0.55rem;
+  }
+
+  button[type="submit"] {
+    font-size: 0.9rem;
+    padding: 0.6rem;
+  }
+
+  .modal-close {
+    font-size: 1.1rem;
+  }
+}

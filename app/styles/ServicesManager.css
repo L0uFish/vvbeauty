@@ -245,3 +245,147 @@
 .services-table {
   min-width: 800px;
 }
+
+/* === RESPONSIVE DESIGN (TABLET & MOBILE) === */
+
+/* Tablet screens (≤1024px) */
+@media (max-width: 1024px) {
+  .services-manager {
+    padding: 1.5rem;
+  }
+
+  .header-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .header-bar h2 {
+    font-size: 1.6rem;
+  }
+
+  .add-btn {
+    align-self: flex-end;
+    font-size: 0.95rem;
+    padding: 0.55rem 1.1rem;
+  }
+
+  .category-section {
+    padding: 1rem 1.25rem;
+  }
+
+  .category-title {
+    font-size: 1.25rem;
+  }
+
+  .services-table {
+    font-size: 0.9rem;
+  }
+
+  .services-table th,
+  .services-table td {
+    padding: 0.65rem 0.75rem;
+  }
+}
+
+/* Mobile screens (≤768px) */
+@media (max-width: 768px) {
+  .services-manager {
+    padding: 1rem;
+    border-radius: 0.5rem;
+  }
+
+  .header-bar {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .header-bar h2 {
+    font-size: 1.4rem;
+  }
+
+  .add-btn {
+    width: 100%;
+    padding: 0.65rem 1rem;
+    font-size: 1rem;
+    border-radius: 0.75rem;
+  }
+
+  .category-section {
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .category-title {
+    font-size: 1.1rem;
+    text-align: center;
+  }
+
+  .services-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    border-spacing: 0 0.25rem;
+    font-size: 0.85rem;
+  }
+
+  .services-table th,
+  .services-table td {
+    padding: 0.55rem 0.6rem;
+  }
+
+  .actions {
+    justify-content: center;
+    gap: 0.4rem;
+  }
+
+  .delete-btn {
+    font-size: 1rem;
+  }
+
+  .drag-handle {
+    font-size: 1rem;
+  }
+}
+
+/* Extra-small screens (≤480px) */
+@media (max-width: 480px) {
+  .services-manager {
+    padding: 0.8rem;
+  }
+
+  .header-bar h2 {
+    font-size: 1.2rem;
+  }
+
+  .add-btn {
+    font-size: 0.9rem;
+    padding: 0.55rem 0.9rem;
+  }
+
+  .category-section {
+    padding: 0.8rem;
+  }
+
+  .category-title {
+    font-size: 1rem;
+  }
+
+  .services-table {
+    font-size: 0.8rem;
+  }
+
+  .services-table th,
+  .services-table td {
+    padding: 0.5rem;
+  }
+
+  .actions {
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.3rem;
+  }
+}

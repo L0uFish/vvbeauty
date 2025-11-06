@@ -25,7 +25,6 @@ export default function Contact() {
         <HeroCarousel />
         <div className="hero-overlay">
           <h1 className="hero-title">Contact & Info</h1>
-          <p className="hero-subtitle">Plan je afspraak of stel je vraag</p>
         </div>
       </section>
 

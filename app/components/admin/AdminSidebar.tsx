@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import "../../styles/AdminSidebar.css";
 
@@ -21,6 +21,11 @@ const tabs = [
 export default function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  // 🔒 Prevent body scroll when menu is open
+  useEffect(() => {
+    document.body.classList.toggle("menu-open", isOpen);
+  }, [isOpen]);
+
   const handleToggle = () => setIsOpen(!isOpen);
   const handleSelect = (tabKey: AdminTab) => {
     setActiveTab(tabKey);
@@ -29,12 +34,12 @@ export default function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarPr
 
   return (
     <>
-      {/* Mobile Menu Button */}
+      {/* === Mobile Menu Button === */}
       <button className="mobile-menu-btn" onClick={handleToggle}>
         {isOpen ? "✖" : "☰"}
       </button>
 
-      {/* Sidebar */}
+      {/* === Sidebar === */}
       <nav className={`admin-sidebar ${isOpen ? "open" : ""}`}>
         <h2 className="sidebar-header">Admin</h2>
         <div className="sidebar-menu">
@@ -51,11 +56,14 @@ export default function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarPr
         </div>
 
         <div className="sidebar-footer">
-          <Link href="/" className="back-to-site">
+          <Link href="/" className="back-to-site" onClick={() => setIsOpen(false)}>
             ← Terug naar Website
           </Link>
         </div>
       </nav>
+
+      {/* === Mobile Overlay (click to close) === */}
+      {isOpen && <div className="mobile-overlay show" onClick={() => setIsOpen(false)} />}
     </>
   );
 }

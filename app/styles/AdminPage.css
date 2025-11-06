@@ -3,6 +3,7 @@
   display: flex;
   min-height: 100vh;
   background-color: #f9fafb; /* Light background */
+  flex-direction: row;
 }
 
 /* Sidebar Layout */
@@ -12,21 +13,23 @@
   left: 0;
   width: 250px;
   height: 100vh;
-  background-color: #1f2937; /* Dark background for sidebar */
-  color: #f9fafb; /* Text color */
+  background-color: #1f2937; /* Dark background */
+  color: #f9fafb;
   padding: 1rem;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  transition: transform 0.3s ease-in-out;
 }
 
 /* Main Content Layout */
 .main-content {
   flex-grow: 1;
   padding: 1rem 2rem;
-  background-color: #fde8f1; /* Light background */
-  overflow-y: auto; /* Allow vertical scrolling */
+  background-color: #fde8f1;
+  overflow-y: auto;
   min-height: 100vh;
   z-index: 0;
 }
@@ -42,4 +45,64 @@ h1 {
   padding: 1.5rem;
   border-radius: 0.75rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* === RESPONSIVE DESIGN === */
+
+/* For tablets and smaller (≤1024px) */
+@media (max-width: 1024px) {
+  .admin-page-layout {
+    flex-direction: column;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 220px;
+    height: 100%;
+    transform: translateX(-100%);
+  }
+
+  .admin-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    padding: 1rem;
+  }
+
+  /* Optional: add a sidebar toggle button */
+  .sidebar-toggle {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    background-color: #1f2937;
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 1.25rem;
+    cursor: pointer;
+    z-index: 20;
+  }
+
+  .sidebar-toggle:hover {
+    background-color: #374151;
+  }
+}
+
+/* For phones (≤640px) */
+@media (max-width: 640px) {
+  .admin-sidebar {
+    width: 200px;
+  }
+
+  .main-content {
+    padding: 0.75rem;
+  }
+
+  h1 {
+    font-size: 1.25rem;
+  }
 }

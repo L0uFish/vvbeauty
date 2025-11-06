@@ -1,3 +1,5 @@
+/* === ADMIN SIDEBAR (VVBeauty Style) === */
+
 /* --- Base Sidebar --- */
 .admin-sidebar {
   position: sticky;
@@ -118,15 +120,34 @@
   background: #d94a7a;
 }
 
+/* --- Mobile Overlay --- */
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 40;
+}
+
+.mobile-overlay.show {
+  display: block;
+}
+
+/* --- Prevent background scroll when menu open --- */
+body.menu-open {
+  overflow: hidden;
+}
+
 /* --- Mobile Layout --- */
 @media (max-width: 768px) {
   .admin-sidebar {
     position: fixed;
     top: 0;
     left: 0;
-    height: auto;
     width: 100%;
-    transform: translateY(-120%);
+    height: 100vh;
+    overflow-y: auto;
+    transform: translateY(-100%);
     transition: transform 0.3s ease-in-out;
   }
 
@@ -149,5 +170,24 @@
 
   .mobile-menu-btn {
     display: flex;
+  }
+}
+
+/* === Fix for white gap on mobile when sidebar is hidden === */
+@media (max-width: 768px) {
+  .admin-page-layout {
+    flex-direction: column;
+  }
+
+  .main-content {
+    width: 100%;
+    margin-left: 0; /* remove any left offset */
+    flex: none;
+  }
+
+  /* Ensure the main area fills the viewport */
+  html,
+  body {
+    height: 100%;
   }
 }

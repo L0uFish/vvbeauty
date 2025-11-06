@@ -176,3 +176,126 @@
     margin-bottom: 1rem;
     border: 1px solid #fca5a5;
 }
+
+/* === RESPONSIVE DESIGN (TABLET & MOBILE) === */
+
+/* Tablet screens (≤1024px) */
+@media (max-width: 1024px) {
+  .modal-content {
+    width: 85%;
+    max-width: 520px;
+    padding: 1.75rem;
+  }
+
+  .modal-header {
+    font-size: 1.3rem;
+  }
+
+  .form-input {
+    font-size: 0.95rem;
+    padding: 0.55rem 0.7rem;
+  }
+
+  .inline-fields {
+    gap: 0.75rem;
+  }
+
+  .modal-actions {
+    justify-content: center;
+  }
+}
+
+/* Mobile screens (≤768px) */
+@media (max-width: 768px) {
+  .modal-backdrop {
+    align-items: flex-end; /* slide-up sheet style */
+    padding: 1rem;
+  }
+
+  .modal-content {
+    width: 100%;
+    max-width: none;
+    border-radius: 1rem 1rem 0 0; /* top-rounded for mobile sheet */
+    padding: 1.25rem;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-header {
+    font-size: 1.2rem;
+    text-align: center;
+  }
+
+  .inline-fields {
+    grid-template-columns: 1fr; /* Stack fields vertically */
+    gap: 0.75rem;
+  }
+
+  .form-group label {
+    font-size: 0.85rem;
+  }
+
+  .form-input {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .accordion-summary {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .accordion-content {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .cancel-button,
+  .save-button {
+    width: 100%;
+    font-size: 1rem;
+    padding: 0.7rem;
+  }
+
+  .error-message {
+    font-size: 0.9rem;
+    padding: 0.6rem;
+  }
+}
+
+/* Extra-small screens (≤480px) */
+@media (max-width: 480px) {
+  .modal-backdrop {
+    padding: 0.5rem;
+  }
+
+  .modal-content {
+    padding: 1rem;
+    border-radius: 1rem 1rem 0 0;
+  }
+
+  .modal-header {
+    font-size: 1.1rem;
+  }
+
+  .form-input {
+    font-size: 0.85rem;
+    padding: 0.45rem 0.55rem;
+  }
+
+  .accordion-summary {
+    font-size: 0.85rem;
+  }
+
+  .cancel-button,
+  .save-button {
+    font-size: 0.9rem;
+    padding: 0.65rem;
+  }
+}
