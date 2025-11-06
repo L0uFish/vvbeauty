@@ -190,3 +190,151 @@
     font-size: 1.45rem;
   }
 }
+
+/* =========================================================
+   VVBeauty — Geblokkeerde Uren Section
+   Elegant, pastel, and consistent with admin theme
+   ========================================================= */
+
+.blocked-hours-section {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(178, 53, 97, 0.12);
+  box-shadow: 0 6px 14px rgba(178, 53, 97, 0.08);
+  padding: 1.75rem 1.5rem;
+  margin-top: 2.5rem;
+  font-family: "Inter", sans-serif;
+}
+
+.blocked-hours-section h3 {
+  font-family: "Playfair Display", serif;
+  color: #b23561;
+  font-size: 1.6rem;
+  text-align: center;
+  margin-bottom: 1.2rem;
+  letter-spacing: 0.02em;
+}
+
+.no-blocked-msg {
+  color: #888;
+  text-align: center;
+  font-style: italic;
+  padding: 1rem 0;
+  background: #fef4f7;
+  border-radius: 10px;
+  border: 1px dashed #f3c9d8;
+}
+
+/* --- Blocked Hour List Layout --- */
+.blocked-hours-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+/* --- Individual Card --- */
+.blocked-hour-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #fde8f1 0%, #fff6fa 100%);
+  border: 1px solid #f3c9d8;
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.blocked-hour-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(178, 53, 97, 0.1);
+  background: linear-gradient(135deg, #fbeaf0 0%, #fff 100%);
+}
+
+/* --- Info Layout --- */
+.blocked-hour-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.blocked-date {
+  font-weight: 600;
+  color: #b23561;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+.blocked-time {
+  font-size: 0.9rem;
+  color: #8a1f45;
+}
+
+.blocked-note {
+  font-size: 0.85rem;
+  color: #555;
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
+/* --- Delete Button --- */
+.delete-blocked-btn {
+  background: #ffffff;
+  border: 1px solid #f3c9d8;
+  border-radius: 50%;
+  color: #b23561;
+  width: 32px;
+  height: 32px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.delete-blocked-btn:hover {
+  background: #ffe4ec;
+  border-color: #e88aab;
+  transform: scale(1.15) rotate(-6deg);
+  box-shadow: 0 2px 6px rgba(178, 53, 97, 0.15);
+}
+
+/* --- Optional: delete button only visible on hover --- */
+.blocked-hour-card .delete-blocked-btn {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.blocked-hour-card:hover .delete-blocked-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* --- Responsive adjustments --- */
+@media (max-width: 768px) {
+  .blocked-hours-section {
+    padding: 1.25rem;
+  }
+
+  .blocked-hours-section h3 {
+    font-size: 1.35rem;
+  }
+
+  .blocked-hour-card {
+    padding: 0.8rem 0.9rem;
+  }
+
+  .blocked-date {
+    font-size: 0.9rem;
+  }
+
+  .blocked-time {
+    font-size: 0.85rem;
+  }
+
+  .delete-blocked-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 0.85rem;
+  }
+}

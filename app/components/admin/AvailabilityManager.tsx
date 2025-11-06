@@ -4,7 +4,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import GeneralHoursModal from "./GeneralHoursModal";
 import OverrideModal from "./OverrideModal";
+import BlockedHourModal from "./BlockedHourModal"; // ✅ new import
 import "../../styles/AvailabilityManager.css";
+
 
 const normalize = (data: any[]) =>
   data.map((entry) => {
@@ -24,22 +26,41 @@ export default function AvailabilityManager() {
   const [selectedDays, setSelectedDays] = useState<Date[]>([]);
   const [showGeneralModal, setShowGeneralModal] = useState(false);
   const [showOverrideModal, setShowOverrideModal] = useState(false);
+  const [showBlockedModal, setShowBlockedModal] = useState(false);
+  const [blockedHours, setBlockedHours] = useState<any[]>([]);
   const [isSelecting, setIsSelecting] = useState(false);
 
   const dragStart = useRef<Date | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [customRes, generalRes] = await Promise.all([
-      supabase.from("custom_hours").select("*").eq("year", year),
-      supabase.from("general_hours").select("*"),
-    ]);
 
-    if (customRes.error) console.error("Error fetching custom_hours:", customRes.error);
-    if (generalRes.error) console.error("Error fetching general_hours:", generalRes.error);
+    try {
+      const [customRes, generalRes, blockedRes] = await Promise.all([
+        supabase.from("custom_hours").select("*").eq("year", year),
+        supabase.from("general_hours").select("*"),
+        supabase
+          .from("blocked_hours")
+          .select("*")
+          .gte("blocked_date", `${year}-01-01`)
+          .lte("blocked_date", `${year}-12-31`)
+          .order("blocked_date", { ascending: true }),
+      ]);
 
-    setCustomHours(normalize(customRes.data || []));
-    setGeneralHours(generalRes.data || []);
+      if (customRes.error)
+        console.error("Error fetching custom_hours:", customRes.error);
+      if (generalRes.error)
+        console.error("Error fetching general_hours:", generalRes.error);
+      if (blockedRes.error)
+        console.error("Error fetching blocked_hours:", blockedRes.error);
+
+      setCustomHours(normalize(customRes.data || []));
+      setGeneralHours(generalRes.data || []);
+      setBlockedHours(blockedRes.data || []);
+    } catch (err) {
+      console.error("Unexpected fetch error:", err);
+    }
+
     setLoading(false);
   }, [year]);
 
@@ -119,6 +140,21 @@ export default function AvailabilityManager() {
     setSelectedDays([date]);
   };
 
+  const handleDeleteBlocked = async (id: string) => {
+  if (!confirm("Weet je zeker dat je dit geblokkeerd uur wil verwijderen?")) return;
+
+  const { error } = await supabase.from("blocked_hours").delete().eq("id", id);
+
+  if (error) {
+    console.error("Error deleting blocked hour:", error);
+    alert("Er is iets misgegaan bij het verwijderen.");
+    return;
+  }
+
+  // Update state locally without refetch
+  setBlockedHours((prev) => prev.filter((b) => b.id !== id));
+};
+
   const handleMouseEnter = (date: Date) => {
     if (!isSelecting || !dragStart.current) return;
     const start = dragStart.current < date ? dragStart.current : date;
@@ -149,9 +185,25 @@ export default function AvailabilityManager() {
           <button onClick={() => setYear((y) => y - 1)}>Previous</button>
           <span>{year}</span>
           <button onClick={() => setYear((y) => y + 1)}>Next</button>
+
           <button
             style={{
               marginLeft: "1rem",
+              backgroundColor: "#b23561",
+              color: "white",
+              padding: "0.4rem 0.8rem",
+              borderRadius: "8px",
+              border: "none",
+              cursor: "pointer",
+            }}
+            onClick={() => setShowBlockedModal(true)}
+          >
+            Uren Blokkeren
+          </button>
+
+          <button
+            style={{
+              marginLeft: "0.5rem",
               backgroundColor: "#b23561",
               color: "white",
               padding: "0.4rem 0.8rem",
@@ -211,6 +263,34 @@ export default function AvailabilityManager() {
         })}
       </div>
 
+      <div className="blocked-hours-list">
+        {blockedHours.map((entry) => (
+          <div key={entry.id} className="blocked-hour-card">
+            <div className="blocked-hour-info">
+              <div className="blocked-date">
+                {new Date(entry.blocked_date).toLocaleDateString("nl-BE", {
+                  weekday: "short",
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </div>
+              <div className="blocked-time">
+                {entry.time_from.slice(0, 5)} – {entry.time_until.slice(0, 5)}
+              </div>
+              {entry.notes && <div className="blocked-note">{entry.notes}</div>}
+            </div>
+
+            <button
+              className="delete-blocked-btn"
+              onClick={() => handleDeleteBlocked(entry.id)}
+            >
+              🗑️
+            </button>
+          </div>
+        ))}
+      </div>
+
       {showGeneralModal && (
         <GeneralHoursModal
           open={showGeneralModal}
@@ -218,6 +298,17 @@ export default function AvailabilityManager() {
           selectedDays={selectedDays}
           onSaved={() => {
             setShowGeneralModal(false);
+            fetchData();
+          }}
+        />
+      )}
+
+      {showBlockedModal && (
+        <BlockedHourModal
+          open={showBlockedModal}
+          onClose={() => setShowBlockedModal(false)}
+          onSaved={() => {
+            setShowBlockedModal(false);
             fetchData();
           }}
         />
