@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useClosedDays } from "@/app/hooks/useClosedDays";
 
 interface CalendarProps {
   selectedDate: string | null;
@@ -9,6 +10,11 @@ interface CalendarProps {
 
 export default function Calendar({ selectedDate, onSelectDate }: CalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  const { closedDays, loading } = useClosedDays(
+  currentMonth.getFullYear(),
+  currentMonth.getMonth()
+);
 
   // Navigation
   const changeMonth = (offset: number) => {
@@ -80,18 +86,25 @@ export default function Calendar({ selectedDate, onSelectDate }: CalendarProps) 
         {days.map(({ date, isCurrent }) => {
           const iso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
           const isSelected = selectedDate === iso;
-          const isToday =
-            date.toDateString() === new Date().toDateString();
+          const isToday = date.toDateString() === new Date().toDateString();
+          const isClosed = closedDays.includes(iso);
+
+          // ✅ Determine if date is in the past (including today)
+          const now = new Date();
+          now.setHours(0, 0, 0, 0);
+          const isPast = date < now;
 
           return (
             <button
               key={iso}
-              onClick={() => isCurrent && onSelectDate(iso)}
-              disabled={!isCurrent}
+              onClick={() => isCurrent && !isClosed && !isPast && onSelectDate(iso)}
+              disabled={!isCurrent || isClosed || isPast}
               className={`calendar-cell
                 ${isSelected ? "selected" : ""}
                 ${isToday ? "today" : ""}
                 ${!isCurrent ? "out-month" : ""}
+                ${isClosed ? "closed-day" : ""}
+                ${isPast ? "past-day" : ""}
               `}
             >
               {date.getDate()}

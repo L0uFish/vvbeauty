@@ -160,8 +160,14 @@ export default function PlannenInner({ initialService }: { initialService: any }
 
         <Calendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
         {selectedDate && (
-          <Timeslots selectedTime={selectedTime} onSelectTime={setSelectedTime} />
+          <Timeslots
+            selectedDate={selectedDate}
+            selectedTime={selectedTime}
+            onSelectTime={setSelectedTime}
+            service={service}
+          />
         )}
+
 
         <button
           type="button"

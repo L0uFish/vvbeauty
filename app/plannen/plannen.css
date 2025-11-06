@@ -274,3 +274,50 @@
   padding: 0.75rem;
   box-shadow: 0 3px 10px rgba(233, 30, 99, 0.05);
 }
+
+/* Closed day (custom/general closure) */
+.calendar-cell.closed-day {
+  background: rgba(255, 240, 240, 0.7);
+  border: 1px dashed rgba(233, 30, 99, 0.3);
+  color: #bbb;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.calendar-cell.closed-day::after {
+  content: "✖";
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 0.7rem;
+  opacity: 0.5;
+}
+
+.calendar-cell.closed-day:hover {
+  background: rgba(255, 240, 240, 0.7);
+  box-shadow: none;
+}
+
+/* --- Past Days (before today) --- */
+.calendar-cell.past-day {
+  background: rgba(255, 245, 245, 0.7);
+  border: 1px dashed rgba(233, 30, 99, 0.25);
+  color: #ccc;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.calendar-cell.past-day:hover {
+  background: rgba(255, 245, 245, 0.7);
+  box-shadow: none;
+  transform: none;
+}
+
+.calendar-cell.past-day::after {
+  content: "✖";
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 0.7rem;
+  opacity: 0.5;
+}
