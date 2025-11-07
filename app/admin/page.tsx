@@ -3,19 +3,15 @@
 import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import AdminSidebar from "../components/admin/AdminSidebar";
+import AdminSidebar, { AdminTab } from "../components/admin/AdminSidebar";
 import UsersManager from "../components/admin/UsersManager";
 import AgendaManager from "../components/admin/AgendaManager";
 import OpeningHoursManager from "../components/admin/AvailabilityManager";
 import MonthView from "@/app/components/admin/MonthView";
 import DayView from "@/app/components/admin/DayView";
 import ServicesManager from "../components/admin/ServicesManager";
-import '../styles/AdminPage.css'; // Import the dedicated CSS file
+import "../styles/AdminPage.css";
 
-// Define the possible tabs
-type AdminTab = "gebruikers" | "agenda" | "openingstijden" | "diensten";
-
-// Component mapping for rendering the correct content
 const ComponentMap: Record<AdminTab, React.FC> = {
   gebruikers: UsersManager,
   agenda: AgendaManager,
@@ -24,6 +20,9 @@ const ComponentMap: Record<AdminTab, React.FC> = {
   month: MonthView,
   day: DayView,
 };
+
+// ... rest of your component stays unchanged
+
 
 export default function AdminPage() {
   const router = useRouter();
