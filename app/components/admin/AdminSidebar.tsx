@@ -14,8 +14,10 @@ interface AdminSidebarProps {
 const tabs = [
   { key: "gebruikers", label: "Gebruikers", icon: "👥" },
   { key: "agenda", label: "Afspraken", icon: "📝" },
-  { key: "openingstijden", label: "Openingstijden", icon: "📅" },
   { key: "diensten", label: "Diensten", icon: "🛠️" },
+  { key: "openingstijden", label: "Jaar", icon: "📅" },
+  { key: "month", label: "Maand", icon: "🗓️" },
+  { key: "day", label: "Dag", icon: "📆" },
 ] as const;
 
 export default function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarProps) {

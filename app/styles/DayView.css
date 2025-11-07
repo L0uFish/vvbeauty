@@ -1,0 +1,102 @@
+.day-view-container {
+  padding: 1.5rem;
+  background: linear-gradient(145deg, #fff, #fef4f7);
+  border-radius: 1rem;
+  box-shadow: 0 8px 24px rgba(178, 53, 97, 0.15);
+  color: #333;
+}
+
+/* Header */
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.2rem;
+}
+
+.day-header h2 {
+  text-transform: capitalize;
+  font-size: 1.6rem;
+  color: #b23561;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* Navigation arrows */
+.day-header button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #b23561;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.day-header button:hover {
+  transform: scale(1.2);
+}
+
+/* Timeline */
+.day-timeline {
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid rgba(178, 53, 97, 0.1);
+}
+
+.time-slot {
+  position: relative;
+  height: 30px;
+  padding-left: 4rem;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  transition: background 0.2s;
+}
+
+.time-slot.solid {
+  border-top: 2px solid #f0d6de;
+}
+
+.time-slot.dotted {
+  border-top: 1px dotted #f7dbe2;
+}
+
+.time-slot:hover {
+  background: #fff7fa;
+}
+
+.time-label {
+  position: absolute;
+  left: 0.8rem;
+  color: #b23561;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Booked / Blocked blocks */
+.slot-block {
+  border-radius: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.2s;
+}
+
+.slot-block.booked {
+  background: linear-gradient(135deg, #6ccf92, #3fb76b);
+  color: #fff;
+}
+
+.slot-block.blocked {
+  background: linear-gradient(135deg, #ffe58f, #ffd54f);
+  color: #4a4a4a;
+  font-weight: 500;
+}
+
+.slot-block:hover {
+  transform: scale(1.02);
+}

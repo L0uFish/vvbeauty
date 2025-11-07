@@ -124,9 +124,11 @@ export default function UsersManager() {
       console.error(error);
       return;
     }
-    const clientData = data as Client[];
-    setUsers(clientData);
-    handleSearch(searchQuery, clientData); 
+    const clientData = (data as Client[]).sort((a, b) =>
+        a.full_name.localeCompare(b.full_name, "nl", { sensitivity: "base" })
+      );
+      setUsers(clientData);
+      handleSearch(searchQuery, clientData);
   }, [searchQuery]);
 
   useEffect(() => {
@@ -137,22 +139,25 @@ export default function UsersManager() {
   const handleSearch = (query: string, userList = users) => {
     setSearchQuery(query);
     const lowercasedQuery = query.toLowerCase();
-    const filtered = userList.filter((user) => {
-      const fullName = user.full_name?.toLowerCase() || "";
-      const phone = user.phone?.toLowerCase() || "";
-      const email = user.email?.toLowerCase() || "";
-      const notes = user.notes?.toLowerCase() || "";
-      
-      return (
-        fullName.includes(lowercasedQuery) ||
-        phone.includes(lowercasedQuery) ||
-        email.includes(lowercasedQuery) ||
-        notes.includes(lowercasedQuery)
-      );
-    });
-    setFilteredUsers(filtered);
-  };
-  
+    const filtered = userList
+  .filter((user) => {
+    const fullName = user.full_name?.toLowerCase() || "";
+    const phone = user.phone?.toLowerCase() || "";
+    const email = user.email?.toLowerCase() || "";
+    const notes = user.notes?.toLowerCase() || "";
+
+    return (
+      fullName.includes(lowercasedQuery) ||
+      phone.includes(lowercasedQuery) ||
+      email.includes(lowercasedQuery) ||
+      notes.includes(lowercasedQuery)
+    );
+  })
+  .sort((a, b) => a.full_name.localeCompare(b.full_name, "nl", { sensitivity: "base" }));
+
+setFilteredUsers(filtered);
+};
+
   const handleAddUser = async (newClientData: Omit<Client, "id">) => {
     
     // We only create the user in auth.users. 

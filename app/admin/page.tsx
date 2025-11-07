@@ -7,6 +7,8 @@ import AdminSidebar from "../components/admin/AdminSidebar";
 import UsersManager from "../components/admin/UsersManager";
 import AgendaManager from "../components/admin/AgendaManager";
 import OpeningHoursManager from "../components/admin/AvailabilityManager";
+import MonthView from "@/app/components/admin/MonthView";
+import DayView from "@/app/components/admin/DayView";
 import ServicesManager from "../components/admin/ServicesManager";
 import '../styles/AdminPage.css'; // Import the dedicated CSS file
 
@@ -19,6 +21,8 @@ const ComponentMap: Record<AdminTab, React.FC> = {
   agenda: AgendaManager,
   openingstijden: OpeningHoursManager,
   diensten: ServicesManager,
+  month: MonthView,
+  day: DayView,
 };
 
 export default function AdminPage() {

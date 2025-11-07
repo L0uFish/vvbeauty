@@ -1,0 +1,93 @@
+/* --- Overlay --- */
+.addmenu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 228, 236, 0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1100;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* --- Modal Box --- */
+.addmenu-box {
+  position: relative;
+  background: linear-gradient(145deg, #fff, #fef3f7);
+  border: 1px solid rgba(178, 53, 97, 0.1);
+  padding: 2rem 2.5rem;
+  border-radius: 1.25rem;
+  box-shadow: 0 10px 30px rgba(178, 53, 97, 0.25);
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  animation: slideUp 0.3s ease-out;
+}
+
+/* --- Title --- */
+.addmenu-box h3 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #b23561;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.4px;
+  text-shadow: 0 1px 2px rgba(255, 192, 203, 0.4);
+}
+
+/* --- Buttons --- */
+.addmenu-box button {
+  display: block;
+  width: 100%;
+  border: none;
+  outline: none;
+  border-radius: 0.75rem;
+  padding: 0.9rem 1rem;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #fff;
+  background: linear-gradient(135deg, #b23561, #d94a7a);
+  margin-top: 1rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 10px rgba(210, 73, 122, 0.3);
+}
+
+.addmenu-box button:hover {
+  background: linear-gradient(135deg, #d94a7a, #b23561);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(178, 53, 97, 0.4);
+}
+
+.addmenu-box button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(178, 53, 97, 0.3);
+}
+
+/* --- Close Button --- */
+.addmenu-box::after {
+  content: "✖";
+  position: absolute;
+  top: 0.75rem;
+  right: 1rem;
+  color: #b23561;
+  font-size: 1.2rem;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.addmenu-box::after:hover {
+  opacity: 1;
+}
+
+/* --- Animations --- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(25px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
