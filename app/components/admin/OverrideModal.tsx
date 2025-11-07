@@ -50,14 +50,14 @@ export default function OverrideModal({
         }
 
         const fetchExisting = async () => {
-            const dateStrings = selectedDays.map(d => 
+            const dateStrings = selectedDays.map(d =>
                 `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
             );
-            const weekdays = selectedDays.map(d => 
-                d.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
+            const weekdays = selectedDays.map(d =>
+                d.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase()
             );
-            
-            // 1. Fetch Custom (Override) Hours
+
+            // 1️⃣ Fetch custom overrides
             const { data: customData } = await supabase
                 .from("custom_hours")
                 .select("id, date, open_time, close_time, is_closed, notes")
@@ -65,40 +65,54 @@ export default function OverrideModal({
 
             setExistingRecords(customData || []);
 
-            // 2. Fetch General (Default) Hours
-            const uniqueWeekdays = Array.from(new Set(weekdays));
+            // 2️⃣ Fetch general defaults
             const { data: generalData, error: generalError } = await supabase
                 .from("general_hours")
                 .select("weekday, open_time, close_time, is_closed")
-                .in("weekday", uniqueWeekdays);
+                .in("weekday", weekdays);
 
-            if (generalError) {
-                console.error("💥 Error fetching general hours:", generalError);
+            if (generalError) console.error("💥 Error fetching general hours:", generalError);
+
+            // 3️⃣ If only one day selected, prefill directly
+            if (selectedDays.length === 1) {
+                const date = selectedDays[0];
+                const weekday = date.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
+                const generalForDay = generalData?.find(g => g.weekday === weekday);
+                const customForDay = customData?.[0];
+
+                if (customForDay) {
+                // 🟢 Override exists → use it
+                setOpenTime(customForDay.open_time?.substring(0, 5) || generalForDay?.open_time?.substring(0, 5) || "09:00");
+                setCloseTime(customForDay.close_time?.substring(0, 5) || generalForDay?.close_time?.substring(0, 5) || "17:00");
+                setIsClosed(customForDay.is_closed);
+                setNote(customForDay.notes || "");
+                } else if (generalForDay) {
+                // 🟢 No override → use general default
+                setOpenTime(generalForDay.open_time?.substring(0, 5) || "09:00");
+                setCloseTime(generalForDay.close_time?.substring(0, 5) || "17:00");
+                setIsClosed(generalForDay.is_closed);
+                setNote("");
+                } else {
+                // 🔴 Fallback
+                setOpenTime("09:00");
+                setCloseTime("17:00");
+                setIsClosed(false);
+                setNote("");
+                }
             }
 
-            // Map general hours to the selected dates for easy reset reference
+            // 4️⃣ Update defaultHours map (optional, for reset logic)
             const defaults: Record<string, GeneralHourDefault> = {};
             if (generalData) {
                 selectedDays.forEach(date => {
-                    const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-                    const weekday = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-                    const defaultDay = generalData.find(g => g.weekday === weekday) as GeneralHourDefault;
-                    if (defaultDay) {
-                        defaults[dateString] = defaultDay;
-                    }
+                const ds = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+                const wd = date.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
+                const defaultDay = generalData.find(g => g.weekday === wd) as GeneralHourDefault;
+                if (defaultDay) defaults[ds] = defaultDay;
                 });
+                setDefaultHours(defaults);
             }
-            setDefaultHours(defaults);
-
-            // 3. Pre-fill form if only ONE day is selected AND a custom record exists
-            if (selectedDays.length === 1 && customData && customData.length > 0) {
-                const firstRecord = customData[0];
-                setOpenTime(firstRecord.open_time?.substring(0, 5) || "09:00");
-                setCloseTime(firstRecord.close_time?.substring(0, 5) || "17:00");
-                setIsClosed(firstRecord.is_closed);
-                setNote(firstRecord.notes || "");
-            }
-        };
+            };
         fetchExisting();
 
     }, [open, selectedDays]); 
