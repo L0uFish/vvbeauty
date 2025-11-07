@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vvbeauty.vercel.app/sitemap.xml

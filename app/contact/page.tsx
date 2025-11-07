@@ -48,7 +48,7 @@ export default function Contact() {
             <div className="contact-item">
               <Mail className="icon" />
               <a href="mailto:veronique.vans@hotmail.com">
-                veronique.vans@hotmail.com
+                info@vvbeauty.be
               </a>
             </div>
 

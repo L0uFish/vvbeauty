@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "strict": true
+  },
+  "tasks": {
+    "start": "deno run --allow-net --allow-env functions/send-reminder/index.ts"
+  },
+  "importMap": "import_map.json"
+}
