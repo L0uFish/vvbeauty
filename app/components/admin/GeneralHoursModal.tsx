@@ -174,25 +174,26 @@ export default function GeneralHoursModal({
                                     Open:{" "}
                                     <input
                                         type="time"
-                                        // Display only H:M, handle null or time string
-                                        // Uses state value, which is correctly injected upon uncheck
-                                        value={h.open_time?.substring(0, 5) || "09:00"}
-                                        onChange={(e) =>
-                                            handleChange(h.weekday, "open_time", e.target.value)
+                                        value={
+                                            h.open_time
+                                            ? h.open_time.substring(0, 5)
+                                            : h.is_closed
+                                            ? "" // keep empty when closed
+                                            : "09:00" // only show default when reopening
                                         }
-                                    />
-                                </label>
-                                <br />
-                                <label>
-                                    Sluit:{" "}
-                                    <input
+                                        onChange={(e) => handleChange(h.weekday, "open_time", e.target.value)}
+                                        />
+
+                                        <input
                                         type="time"
-                                        // Display only H:M, handle null or time string
-                                        // Uses state value, which is correctly injected upon uncheck
-                                        value={h.close_time?.substring(0, 5) || "17:00"}
-                                        onChange={(e) =>
-                                            handleChange(h.weekday, "close_time", e.target.value)
+                                        value={
+                                            h.close_time
+                                            ? h.close_time.substring(0, 5)
+                                            : h.is_closed
+                                            ? ""
+                                            : "17:00"
                                         }
+                                        onChange={(e) => handleChange(h.weekday, "close_time", e.target.value)}
                                     />
                                 </label>
                             </>
