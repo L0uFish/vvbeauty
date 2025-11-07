@@ -4,7 +4,14 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import "../../styles/AdminSidebar.css";
 
-export type AdminTab = "gebruikers" | "agenda" | "openingstijden" | "diensten";
+export type AdminTab =
+  | "gebruikers"
+  | "agenda"
+  | "openingstijden"
+  | "diensten"
+  | "month"
+  | "day";
+
 
 interface AdminSidebarProps {
   activeTab: AdminTab;
