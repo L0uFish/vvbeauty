@@ -97,7 +97,7 @@ export default function Calendar({ selectedDate, onSelectDate }: CalendarProps) 
           return (
             <button
               key={iso}
-              onClick={() => isCurrent && !isClosed && !isPast && onSelectDate(iso)}
+              onClick={() => isCurrent && !isClosed && !isPast && !isToday&& onSelectDate(iso)}
               disabled={!isCurrent || isClosed || isPast}
               className={`calendar-cell
                 ${isSelected ? "selected" : ""}

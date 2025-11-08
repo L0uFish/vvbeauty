@@ -321,3 +321,26 @@
   font-size: 0.7rem;
   opacity: 0.5;
 }
+
+.calendar-cell.today {
+  border: 2px solid #e91e63;
+  font-weight: 700;
+  background: #b235616b;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(233, 30, 99, 0.15);
+  position: relative;
+}
+
+.calendar-cell.today::after {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: 0.65rem;
+  color: #e91e63;
+  opacity: 0.8;
+  font-weight: 600;
+}
+
+.calendar-cell.today:hover {
+  cursor: not-allowed;
+}
