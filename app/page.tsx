@@ -4,7 +4,6 @@ import "./styles/home.css";
 import Header from "./components/LoginBtn";
 import "./styles/HeroCarousel.css"
 import BrownieEasterEgg from "./components/BrownieEasterEgg";
-import DecemberPromo from "./components/DecemberPromo";
 
 export default function Home() {
   return (
@@ -22,7 +21,6 @@ export default function Home() {
         <ActionButtons />
       </section>
       <BrownieEasterEgg />
-      <DecemberPromo />
     </main>
   );
 }
