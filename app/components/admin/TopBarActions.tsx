@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import AddMenuModal from "./AddMenuModal";
-import "../../styles/TopBarActions.css";
+import "../../styles/admin/TopBarActions.css";
 
 export default function TopBarActions() {
   const [showAddMenu, setShowAddMenu] = useState(false);

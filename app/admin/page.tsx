@@ -10,7 +10,7 @@ import OpeningHoursManager from "../components/admin/AvailabilityManager";
 import MonthView from "@/app/components/admin/MonthView";
 import DayView from "@/app/components/admin/DayView";
 import ServicesManager from "../components/admin/ServicesManager";
-import "../styles/AdminPage.css";
+import "../styles/admin/AdminPage.css";
 
 const ComponentMap: Record<AdminTab, React.FC> = {
   gebruikers: UsersManager,

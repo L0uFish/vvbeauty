@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabaseClient";
-import "../../styles/UsersManager.css"; // reuse same styling for now
+import "../../styles/admin/UsersManager.css"; // reuse same styling for now
 
 export default function ServiceAddModal({
   open,

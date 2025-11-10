@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabaseClient";
-import "./loginModal.css"; // reuse same styling
+import "../../styles/modals/loginModal.css"; // reuse same styling
 // 🟢 IMPORT THE UNIFIED VALIDATION LOGIC
 import { cleanAndValidatePhone } from "@/app/hooks/useRequirePhone"; 
 

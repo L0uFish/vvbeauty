@@ -4,7 +4,6 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 // 🟢 The logic is fixed in the imported function
 import { cleanAndValidatePhone } from "@/app/hooks/useRequirePhone"; 
-import "./phoneModal.css";
 
 export default function PhoneModal({
   open,

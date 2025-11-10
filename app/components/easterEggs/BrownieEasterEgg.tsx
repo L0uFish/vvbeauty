@@ -77,11 +77,6 @@ export default function BrownieEasterEgg() {
           } as React.CSSProperties}
         >
           <img src="/Brownie.png" alt="Brownie" className="brownie-epic" />
-          <div className="sparkle-container">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className={`sparkle ${b.golden ? "gold" : ""}`} />
-            ))}
-          </div>
         </div>
       ))}
     </>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabaseClient";
-import "../../styles/Modals.css";
+import "../../styles/modals/Modals.css";
 
 // Define a minimal interface for the general hour data
 interface GeneralHourDefault {

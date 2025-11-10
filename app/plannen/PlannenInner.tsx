@@ -8,7 +8,7 @@ import Timeslots from "./Timeslots";
 import { useUser } from "@/app/context/UserContext";
 import { useAuthUI } from "@/app/context/AuthUIContext";
 import { useRequirePhone } from "@/app/hooks/useRequirePhone";
-import "./plannen.css";
+import "../styles/plannen.css";
 
 export default function PlannenInner({ initialService }: { initialService: any }) {
   const searchParams = useSearchParams();

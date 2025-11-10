@@ -2,8 +2,8 @@
 
 import { Suspense } from "react";
 import PlannenInner from "./PlannenInner";
-import HomeButton from "../components/HomeButton";
-import Header from "../components/LoginBtn";
+import HomeButton from "../components/home/HomeButton";
+import Header from "../components/home/LoginBtn";
 
 export default function PlannenClient({ initialService }: { initialService: any }) {
   return (

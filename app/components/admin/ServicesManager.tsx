@@ -9,7 +9,7 @@ import {
   DropResult,
 } from "@hello-pangea/dnd";
 import ServiceAddModal from "./ServiceAddModal";
-import "../../styles/ServicesManager.css";
+import "../../styles/admin/ServicesManager.css";
 
 /* === TYPE DEFINITIONS === */
 type Service = {

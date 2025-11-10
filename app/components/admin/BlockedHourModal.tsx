@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import "../../styles/Modals.css";
+import "../../styles/modals/Modals.css";
 
 export default function BlockedHourModal({
   open,

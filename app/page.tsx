@@ -1,9 +1,8 @@
-import HeroCarousel from "./components/HeroCarousel";
-import ActionButtons from "./components/ActionButtons";
-import "./styles/home.css";
-import Header from "./components/LoginBtn";
-import "./styles/HeroCarousel.css"
-import BrownieEasterEgg from "./components/BrownieEasterEgg";
+import HeroCarousel from "./components/home/HeroCarousel";
+import ActionButtons from "./components/home/ActionButtons";
+import "./styles/home/homebtns.css";
+import Header from "./components/home/LoginBtn";
+import BrownieEasterEgg from "./components/easterEggs/BrownieEasterEgg";
 
 export default function Home() {
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import "../../styles/AddMenuModal.css";
+import "../../styles/modals/AddMenuModal.css";
 
 export default function AddMenuModal({ onClose }: { onClose: () => void }) {
   return createPortal(

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { useUser } from "@/app/context/UserContext";
-import "./loginModal.css";
+import "../../styles/modals/loginModal.css";
 import { cleanAndValidatePhone } from "@/app/hooks/useRequirePhone"; 
 
 export default function LoginModal({

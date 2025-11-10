@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import "../../styles/AdminSidebar.css";
+import "../../styles/admin/AdminSidebar.css";
 
 export type AdminTab =
   | "gebruikers"

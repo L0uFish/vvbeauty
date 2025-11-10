@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"; // Added useCallback
 import { supabase } from "@/lib/supabaseClient";
-import LoginModal from "./LoginModal";
-import "../styles/Header.css";
+import LoginModal from "../modals/LoginModal";
+import "../../styles/home/loginbtn.css";
 
 // Define a more specific type for the user, including the role data
 interface AppUser {

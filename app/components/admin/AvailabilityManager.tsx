@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import GeneralHoursModal from "./GeneralHoursModal";
 import OverrideModal from "./OverrideModal";
 import BlockedHourModal from "./BlockedHourModal"; // ✅ new import
-import "../../styles/AvailabilityManager.css";
+import "../../styles/admin/AvailabilityManager.css";
 
 
 const normalize = (data: any[]) =>

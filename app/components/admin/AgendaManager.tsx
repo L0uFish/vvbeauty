@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import "../../styles/AgendaManager.css";
+import "../../styles/admin/AgendaManager.css";
 import React from "react";
 
 // --- Types ---

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import "../../styles/DayView.css";
+import "../../styles/admin/DayView.css";
 import TopBarActions from "./TopBarActions";
 
 export default function DayView() {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Home } from "lucide-react"; // modern icon set already in Next + shadcn setups
-import "../styles/HomeButton.css";
+import "../../styles/home/HomeButton.css";
 
 export default function HomeButton() {
   return (

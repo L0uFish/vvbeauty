@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import "../styles/HeroCarousel.css";
+import "../../styles/Home/herocarousel.css";
 
 // Utility: shuffle an array
 const shuffleArray = (array: string[]) => {

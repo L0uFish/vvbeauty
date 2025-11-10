@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import "../../styles/MonthView.css";
+import "../../styles/admin/MonthView.css";
 import TopBarActions from "./TopBarActions";
 
 export default function MonthView() {

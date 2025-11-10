@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState } from "react";
-import LoginModal from "@/app/components/LoginModal";
+import LoginModal from "@/app/components/modals/LoginModal";
 
 type AuthUIContextType = {
   openLogin: () => void;

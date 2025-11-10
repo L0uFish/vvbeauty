@@ -1,8 +1,8 @@
 "use client";
 
-import HeroCarousel from "../components/HeroCarousel";
-import Header from "../components/LoginBtn";
-import HomeButton from "../components/HomeButton";
+import HeroCarousel from "../components/home/HeroCarousel";
+import Header from "../components/home/LoginBtn";
+import HomeButton from "../components/home/HomeButton";
 import "../styles/contact.css";
 import {
   Mail,

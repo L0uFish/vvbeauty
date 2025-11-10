@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import "../../styles/UsersManager.css";
+import "../../styles/admin/UsersManager.css";
 import React from "react";
 
 // --- Types ---

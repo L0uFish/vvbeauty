@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useUser } from "../context/UserContext";
 import "../styles/userDashboard.css";
-import ProfileEditModal from "../components/ProfileEditModal";
-import Header from "../components/LoginBtn";
-import HomeButton from "../components/HomeButton";
+import ProfileEditModal from "../components/modals/ProfileEditModal";
+import Header from "../components/home/LoginBtn";
+import HomeButton from "../components/home/HomeButton";
 
 export default function Profiel() {
   const { user, loading, refreshUser } = useUser();
@@ -111,7 +111,6 @@ export default function Profiel() {
   return (
     <main className="user-dashboard">
       <Header />
-      <HomeButton />
       {/* -------------------- */}
       {/* === USER INFO === */}
       {/* -------------------- */}

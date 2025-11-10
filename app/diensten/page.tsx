@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { getServerSupabase } from "@/lib/supabaseServer"; // ✅ server-side Supabase helper
-import HeroCarousel from "../components/HeroCarousel";
-import Header from "../components/LoginBtn";
-import HomeButton from "../components/HomeButton";
+import HeroCarousel from "../components/home/HeroCarousel";
+import Header from "../components/home/LoginBtn";
+import HomeButton from "../components/home/HomeButton";
 import { setMultipleServices } from "@/lib/serviceCache"; // ✅ local cache for /plannen
 import "../styles/diensten.css";
 

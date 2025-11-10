@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
-import HeroCarousel from "../components/HeroCarousel";
-import Header from "../components/LoginBtn";
-import HomeButton from "../components/HomeButton";
+import HeroCarousel from "../components/home/HeroCarousel";
+import Header from "../components/home/LoginBtn";
+import HomeButton from "../components/home/HomeButton";
 import "../styles/prijslijst.css";
 
 export default function Prijslijst() {
