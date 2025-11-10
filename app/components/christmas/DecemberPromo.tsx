@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import "../styles/DecemberPromo.css";
+import "../../styles/christmas/DecemberPromo.css";
 
 export default function DecemberPromo() {
   const [visible, setVisible] = useState(false);
@@ -36,7 +36,11 @@ export default function DecemberPromo() {
             <Link href="/diensten" className="banner-btn">
               Bekijk Diensten
             </Link>
-            <button className="banner-close" onClick={handleClose} aria-label="Sluiten">
+            <button
+              className="banner-close"
+              onClick={handleClose}
+              aria-label="Sluiten"
+            >
               ×
             </button>
           </div>

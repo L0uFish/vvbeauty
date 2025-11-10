@@ -1,0 +1,149 @@
+.vvbeauty-snowfall-wrapper {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Canvas snowflakes */
+.vvbeauty-snowfall-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* --- Ambient rosy glow --- */
+.hero-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 80%,
+    rgba(249, 228, 235, 0.25) 0%,
+    rgba(255, 245, 248, 0.08) 40%,
+    transparent 100%
+  );
+  mix-blend-mode: soft-light;
+  animation: softPulse 12s ease-in-out infinite alternate;
+  z-index: 3;
+}
+@keyframes softPulse {
+  from { opacity: 0.3; }
+  to { opacity: 0.6; }
+}
+
+/* --- Multi-mound snow piles --- */
+.vvbeauty-snow-layer {
+  position: absolute;
+  bottom: -10px;
+  left: -10%;
+  width: 120%;
+  height: 0;
+  opacity: 0;
+  animation: snowBaseGrow 14s ease-in-out forwards;
+  transform: translateY(2px);
+}
+.vvbeauty-snow-layer::before,
+.vvbeauty-snow-layer::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 120%;
+  height: 100%;
+  border-top-left-radius: 50% 35%;
+  border-top-right-radius: 50% 35%;
+  background-repeat: no-repeat;
+  background-blend-mode: lighten;
+  filter: blur(6px) brightness(1.06);
+}
+
+/* White base mound */
+.vvbeauty-snow-layer::before {
+  background:
+    radial-gradient(circle at 15% 115%, rgba(255, 255, 255, 1) 0%, rgba(245, 245, 245, 0.8) 55%, transparent 85%),
+    radial-gradient(circle at 65% 120%, rgba(255, 255, 255, 1) 0%, rgba(240, 240, 240, 0.7) 60%, transparent 85%),
+    linear-gradient(to top, #ffffff 0%, rgba(255, 255, 255, 0.8) 40%, transparent 100%);
+  animation: snowMound1 16s ease-in-out forwards;
+}
+
+/* Blush reflection mound */
+.vvbeauty-snow-layer::after {
+  background:
+    radial-gradient(circle at 40% 130%, rgba(255, 245, 248, 1) 0%, rgba(249, 228, 235, 0.8) 40%, transparent 80%),
+    radial-gradient(circle at 85% 130%, rgba(255, 250, 252, 1) 0%, rgba(255, 240, 246, 0.7) 45%, transparent 80%),
+    linear-gradient(to top, #fff5f8 0%, rgba(255, 250, 252, 0.7) 50%, transparent 100%);
+  opacity: 0.9;
+  filter: blur(8px) brightness(1.07);
+  animation: snowMound2 18s ease-in-out forwards;
+}
+
+/* Snow texture overlay */
+.vvbeauty-snow-layer .texture {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.45) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
+  background-size: 3px 3px, 4px 4px;
+  opacity: 0.2;
+  mix-blend-mode: screen;
+  animation: sparkleDrift 15s ease-in-out infinite alternate;
+}
+
+/* Sparkles */
+.sparkle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: radial-gradient(circle, #e8c7b7 0%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0;
+  animation: sparkleTwinkle 6s ease-in-out infinite;
+  z-index: 6;
+}
+.sparkle-1 { top: 25%; left: 45%; animation-delay: 2s; }
+.sparkle-2 { top: 40%; left: 30%; animation-delay: 4s; }
+.sparkle-3 { top: 35%; left: 65%; animation-delay: 6s; }
+
+@keyframes sparkleTwinkle {
+  0%, 100% { opacity: 0; transform: scale(0.6); }
+  50% { opacity: 0.9; transform: scale(1.1); }
+}
+
+/* Frost vignette */
+.hero-frost {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    transparent 60%,
+    rgba(255, 255, 255, 0.12) 80%,
+    rgba(255, 255, 255, 0.28) 100%
+  );
+  backdrop-filter: blur(2px);
+  z-index: 7;
+}
+
+/* --- Animations --- */
+@keyframes snowBaseGrow {
+  0% { height: 0; opacity: 0; }
+  30% { opacity: 0.6; }
+  100% { height: 24%; opacity: 1; }
+}
+@keyframes snowMound1 {
+  0% { transform: scaleY(0.2) translateY(30px); opacity: 0; }
+  40% { opacity: 0.6; }
+  100% { transform: scaleY(1) translateY(0); opacity: 1; }
+}
+@keyframes snowMound2 {
+  0% { transform: scaleY(0.1) translateY(40px); opacity: 0; }
+  50% { opacity: 0.6; }
+  100% { transform: scaleY(1) translateY(0); opacity: 0.95; }
+}
+@keyframes sparkleDrift {
+  from { transform: translateX(0px); }
+  to { transform: translateX(8px); }
+}
