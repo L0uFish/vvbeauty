@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"; // Added useCa
 import { supabase } from "@/lib/supabaseClient";
 import LoginModal from "../modals/LoginModal";
 import "../../styles/home/loginbtn.css";
+import Link from "next/link";
 
 // Define a more specific type for the user, including the role data
 interface AppUser {
@@ -161,7 +162,7 @@ export default function LoginBtn() {
             <div className="user-dropdown">
               {/* --- Admin Panel Link Conditional Rendering --- */}
               {role === "admin" && (
-                <a href="/admin">AdminPanel</a>
+                <Link href="/admin">Admin Panel</Link>
               )}
               {/* ------------------------------------------- */}
               <a href="/profile">Mijn gegevens</a>

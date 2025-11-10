@@ -2,6 +2,7 @@ import "./globals.css";
 import { UserProvider } from "@/app/context/UserContext";
 import { AuthUIProvider } from "@/app/context/AuthUIContext";
 import HomeButton from "./components/home/HomeButton";
+import LoginBtn from "./components/home/LoginBtn";
 
 export const metadata = {
   metadataBase: new URL("https://vvbeauty.vercel.app"),
@@ -68,6 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="nl">
       <body>
         <HomeButton />
+        <LoginBtn />
         <UserProvider>
           <AuthUIProvider>{children}</AuthUIProvider>
         </UserProvider>
