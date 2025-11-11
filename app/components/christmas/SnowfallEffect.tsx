@@ -72,22 +72,6 @@ export default function SnowfallEffect() {
   return (
     <div className="vvbeauty-snowfall-wrapper">
       <canvas ref={canvasRef} className="vvbeauty-snowfall-canvas" />
-
-      {/* Ambient glow overlay */}
-      <div className="hero-glow" />
-
-      {/* Subtle sparkles */}
-      <div className="sparkle sparkle-1" />
-      <div className="sparkle sparkle-2" />
-      <div className="sparkle sparkle-3" />
-
-      {/* Snow mounds */}
-      <div className="vvbeauty-snow-layer">
-        <div className="texture" />
-      </div>
-
-      {/* Optional frosty vignette */}
-      <div className="hero-frost" />
     </div>
   );
 }
