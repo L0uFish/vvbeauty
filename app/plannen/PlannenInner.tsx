@@ -1,3 +1,4 @@
+// app/plannen/PlannenInner.tsx
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
@@ -23,10 +24,11 @@ export default function PlannenInner({ initialService }: { initialService: any }
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [isBookingInProgress, setIsBookingInProgress] = useState(false); // To prevent repeated clicks
+  const [isBookingInProgress, setIsBookingInProgress] = useState(false);
 
   const serviceId = searchParams?.get("service");
 
+  // Pre-fill from URL
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -36,33 +38,65 @@ export default function PlannenInner({ initialService }: { initialService: any }
     if (preTime) setSelectedTime(preTime);
   }, []);
 
-  // Only re-fetch if the user navigates to a different service
+  // Re-fetch service + hours if serviceId changes
   useEffect(() => {
     if (!serviceId || serviceId === initialService?.id) return;
-    (async () => {
-      const { data, error } = await supabase
-        .from("services")
-        .select("*")
-        .eq("id", serviceId)
-        .single();
 
-      if (!error && data) setService(data);
+    (async () => {
+      try {
+        // 1. Load service (no relations)
+        const { data: serviceData, error: serviceError } = await supabase
+          .from("services")
+          .select("id, name, description, duration_minutes, buffer_minutes")
+          .eq("id", serviceId)
+          .single();
+
+        if (serviceError || !serviceData) {
+          console.error("Service not found:", serviceError);
+          return;
+        }
+
+        // 2. Load ALL general_hours (global)
+        const { data: generalHours } = await supabase
+          .from("general_hours")
+          .select("*");
+
+        // 3. Load custom_hours for current month
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const { data: customHours } = await supabase
+          .from("custom_hours")
+          .select("date, open_time, close_time, is_closed")
+          .gte("date", `${year}-${month}-01`)
+          .lte("date", `${year}-${month}-31`);
+
+        // 4. Combine
+        const serviceWithHours = {
+          ...serviceData,
+          generalHours: generalHours || [],
+          customHours: customHours || [],
+        };
+
+        setService(serviceWithHours);
+      } catch (err) {
+        console.error("Failed to load service with hours:", err);
+      }
     })();
   }, [serviceId, initialService]);
 
-  // 🟩 HANDLE BOOKING CLICK
+  // Handle booking
   const handleBooking = async () => {
-    console.log("🟢 handleBooking clicked", { user, selectedDate, selectedTime, service });
+    console.log("handleBooking clicked", { user, selectedDate, selectedTime, service });
 
     if (!selectedDate || !selectedTime || !service) {
-      console.warn("⛔ Missing date/time/service");
+      console.warn("Missing date/time/service");
       return;
     }
 
-    if (isBookingInProgress) return; // Prevent multiple clicks during booking
+    if (isBookingInProgress) return;
     setIsBookingInProgress(true);
 
-    // Not logged in → store pending booking
     if (!user) {
       localStorage.setItem(
         "pendingBooking",
@@ -72,30 +106,27 @@ export default function PlannenInner({ initialService }: { initialService: any }
           selectedTime,
         })
       );
-      console.warn("🔒 No user, opening login...");
+      console.warn("No user, opening login...");
       openLogin();
       setIsBookingInProgress(false);
       return;
     }
 
-    // Ensure phone is filled in
-    console.log("📞 Ensuring phone...");
+    console.log("Ensuring phone...");
     const hasPhone = await ensurePhone();
-    console.log("📞 ensurePhone() result:", hasPhone);
+    console.log("ensurePhone() result:", hasPhone);
     if (!hasPhone) {
-      console.warn("⛔ No phone → aborting booking");
+      console.warn("No phone → aborting booking");
       setIsBookingInProgress(false);
       return;
     }
 
-    console.log("✅ Phone verified, creating booking...");
+    console.log("Phone verified, creating booking...");
     await createBooking();
   };
 
-  // 🟦 CREATE BOOKING IN SUPABASE
   const createBooking = async () => {
-    console.log("➡️ createBooking started");
-
+    console.log("createBooking started");
     setSaving(true);
     setMessage(null);
 
@@ -113,32 +144,29 @@ export default function PlannenInner({ initialService }: { initialService: any }
         ])
         .select();
 
-      console.log("📦 Supabase insert result:", { data, error });
+      console.log("Supabase insert result:", { data, error });
 
       if (error) {
-        alert("❌ Er is iets misgegaan bij het boeken. Probeer opnieuw.");
+        alert("Er is iets misgegaan bij het boeken. Probeer opnieuw.");
         return;
       }
 
-      // ✅ Booking success: show popup
       setShowSuccess(true);
-      console.log("✅ Appointment created successfully!");
+      console.log("Appointment created successfully!");
 
-      // Wait before redirecting
       setTimeout(() => {
         router.push("/");
       }, 3000);
 
-      // Hide popup a bit later (after redirect)
       setTimeout(() => {
         setShowSuccess(false);
       }, 3500);
     } catch (err) {
-      console.error("🔥 Exception during booking:", err);
-      alert("❌ Er ging iets mis. Probeer opnieuw.");
+      console.error("Exception during booking:", err);
+      alert("Er ging iets mis. Probeer opnieuw.");
     } finally {
       setSaving(false);
-      setIsBookingInProgress(false); // Reset after booking attempt
+      setIsBookingInProgress(false);
     }
   };
 
@@ -168,7 +196,6 @@ export default function PlannenInner({ initialService }: { initialService: any }
           />
         )}
 
-
         <button
           type="button"
           disabled={!selectedDate || !selectedTime || saving || isBookingInProgress}
@@ -186,7 +213,7 @@ export default function PlannenInner({ initialService }: { initialService: any }
       {showSuccess && (
         <div className="modal-overlay mini-blocker">
           <div className="mini-modal-content">
-            <h3>✅ Afspraak bevestigd!</h3>
+            <h3>Afspraak bevestigd!</h3>
             <p>Bedankt voor je boeking — we zien je binnenkort!</p>
           </div>
         </div>

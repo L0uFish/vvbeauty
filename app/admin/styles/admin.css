@@ -288,7 +288,11 @@ body {
   box-shadow: var(--vv-shadow);
   max-height: 900px;
 }
-
+.day-grid.closed .lanes {
+  background: #ffe8ec;
+  border-color: #f1b0b0;
+  opacity: 0.85;
+}
 .ticks {
   position: relative;
   background: #fffafc;
@@ -418,10 +422,7 @@ body {
 }
 
 .line.green {
-  background: linear-gradient(90deg, #7ec89a, #57b885);
-}
-.line.accent {
-  background: linear-gradient(90deg, var(--vv-accent), #f58fa9);
+  background: linear-gradient(90deg, #66bb6a, #57b885);
 }
 .line.red {
   background: linear-gradient(90deg, var(--vv-red), #f1a7b6);
@@ -669,4 +670,49 @@ body {
   background: #ffe8ec;
   border-color: #f1b0b0;
   opacity: 0.85;
+}
+
+.mcell.closed,
+.mini-day.closed,
+.day-grid.closed .lanes {
+  background: #ffe6ec;
+  opacity: 0.95;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--vv-primary);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vv-accent);
+}
+
+@media (max-width: 600px) {
+  .day-grid {
+    grid-template-columns: 60px 1fr;
+  }
+  .tick .label { font-size: 11px; }
+}
+
+html, body {
+  scroll-behavior: smooth;
+}
+
+.k-stage {
+  animation: fadeIn 0.25s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* --- Adjust calendar top bar to avoid overlap with floating LoginBtn --- */
+.admin-main .k-toolbar {
+  margin-top: 4.5rem; /* ≈ 72px down from top-right login area */
+}
+
+@media (max-width: 800px) {
+  /* On mobile, keep it tighter since the LoginBtn is smaller */
+  .admin-main .k-toolbar {
+    margin-top: 3.2rem;
+  }
 }

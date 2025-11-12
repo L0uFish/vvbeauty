@@ -1,0 +1,529 @@
+/* ============================================================
+   VVBEAUTY — DIENSTEN (ADMIN)
+   Soft pink, luxury cards, full-screen modal
+   ============================================================ */
+
+/* --------- PAGE + TOP BAR --------------------------------- */
+
+.diensten-page {
+  padding: 24px 32px 40px;
+}
+
+/* Make top bar same width as the services table */
+.top-bar {
+  max-width: 1100px;
+  margin: 0 auto 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* --------- SEARCH BAR ------------------------------------- */
+
+.searchbar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 8px 14px;
+
+  border: 1px solid var(--vv-border, #f0cfe0);
+  box-shadow: 0 4px 10px rgba(178, 53, 97, 0.08);
+
+  min-width: 260px;
+  max-width: 340px;
+
+  transition: box-shadow 0.2s ease, border-color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.searchbar-wrapper:hover {
+  box-shadow: 0 8px 18px rgba(178, 53, 97, 0.14);
+  border-color: rgba(178, 53, 97, 0.55);
+  transform: translateY(-1px);
+}
+
+.search-icon {
+  color: #b23561;
+  opacity: 0.8;
+}
+
+.search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.95rem;
+  width: 100%;
+}
+
+/* --------- ADD BUTTON ------------------------------------- */
+
+.add-button {
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+
+  background: radial-gradient(circle at 0 0, #ffe8f1 0, #f8c5d9 40%, #f0a3c6 100%);
+  color: #b23561;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
+  box-shadow: 0 4px 12px rgba(178, 53, 97, 0.25);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: box-shadow 0.15s ease, transform 0.15s ease,
+    filter 0.15s ease;
+}
+
+.add-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(178, 53, 97, 0.35);
+  filter: brightness(1.02);
+}
+
+/* --------- SERVICES WRAPPER ------------------------------- */
+
+.services-list {
+  max-width: 1100px;
+  margin: 0 auto 40px;
+}
+
+/* Provide a soft grouping for each category */
+.category-block + .category-block {
+  margin-top: 12px;
+}
+
+/* --------- CATEGORY HEADER ------------------------------- */
+
+.category-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+
+  padding: 14px 18px;
+  margin-top: 16px;
+
+  background: linear-gradient(120deg, #ffeaf4 0%, #fff8fc 45%, #ffffff 100%);
+  border-radius: 16px;
+  border: 1px solid var(--vv-border, #f0cfe0);
+  box-shadow: 0 4px 16px rgba(178, 53, 97, 0.12);
+}
+
+.collapse-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: #b23561;
+}
+
+.category-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-title-text {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.category-input {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--vv-border, #f0cfe0);
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.category-input:focus {
+  border-color: #b23561;
+  box-shadow: 0 0 0 2px rgba(178, 53, 97, 0.2);
+}
+
+.category-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+/* Show a red cross icon on empty categories */
+.category-delete-btn::before {
+  content: "✕";
+  font-weight: 700;
+  color: #d00000;
+}
+
+.category-delete-btn:hover {
+  opacity: 1;
+}
+
+/* Align drag-handle vertically in category row */
+.category-header .drag-handle {
+  justify-self: end;
+  align-self: center;
+}
+
+/* --------- CATEGORY COLLAPSE ------------------------------ */
+
+.category-services {
+  overflow: hidden;
+  transition:
+    max-height 0.25s ease,
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.category-services.expanded {
+  max-height: 2000px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.category-services.collapsed {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+}
+
+/* --------- SERVICE TABLE HEADER --------------------------- */
+
+.service-header-row {
+  margin-top: 10px;
+  padding: 8px 18px;
+
+  background: #ffeef7;
+  border-radius: 12px;
+  border: 1px solid #f4d1e2;
+
+  display: grid;
+  grid-template-columns:
+    40px        /* active */
+    1.5fr       /* name */
+    80px        /* price */
+    90px        /* promo */
+    60px        /* duration */
+    70px        /* buffer */
+    45px        /* delete */
+    40px;       /* drag */
+
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #b23561;
+  opacity: 0.8;
+}
+
+/* --------- SERVICE ITEM ----------------------------------- */
+
+.service-item {
+  background: #ffffff;
+  margin-top: 8px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--vv-border, #f0cfe0);
+  box-shadow: 0 3px 10px rgba(178, 53, 97, 0.08);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.service-item:hover {
+  box-shadow: 0 6px 18px rgba(178, 53, 97, 0.18);
+  transform: translateY(-1px);
+}
+
+.service-item.inactive {
+  opacity: 0.45;
+  filter: grayscale(0.35);
+}
+
+/* grid for header + rows */
+.service-grid {
+  display: grid;
+  grid-template-columns:
+    40px
+    1.5fr
+    80px
+    90px
+    60px
+    70px
+    45px
+    40px;
+  gap: 10px;
+  align-items: center;
+}
+
+/* top row (checkbox + fields + actions) */
+.service-top-row {
+  composes: service-grid;
+}
+
+/* bottom row (description) */
+.service-bottom-row {
+  margin-top: 4px;
+  padding-left: 40px;
+}
+
+/* --------- ACTIVE TOGGLE ---------------------------------- */
+
+.active-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --------- INLINE EDIT FIELDS ----------------------------- */
+
+.service-name,
+.service-price,
+.service-promo,
+.service-duration,
+.service-buffer,
+.service-description {
+  font-size: 0.9rem;
+  cursor: text;
+}
+
+.service-description {
+  display: block;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+/* active editing inputs */
+.service-name input,
+.service-price input,
+.service-promo input,
+.service-duration input,
+.service-buffer input,
+.service-description textarea {
+  width: 100%;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--vv-border, #f0cfe0);
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.service-description textarea {
+  resize: vertical;
+}
+
+.service-name input:focus,
+.service-price input:focus,
+.service-promo input:focus,
+.service-duration input:focus,
+.service-buffer input:focus,
+.service-description textarea:focus {
+  border-color: #b23561;
+  box-shadow: 0 0 0 2px rgba(178, 53, 97, 0.2);
+}
+
+/* --------- DELETE BUTTONS --------------------------------- */
+
+.service-delete-btn,
+.category-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+}
+
+/* red X icon for services */
+.service-delete-btn::before {
+  content: "✕";
+  font-weight: 700;
+  color: #d00000;
+  font-size: 1rem;
+}
+
+.service-delete-btn:hover::before,
+.category-delete-btn:hover::before {
+  filter: brightness(1.1);
+}
+
+/* --------- DRAG HANDLE (6 DOTS) --------------------------- */
+
+.drag-handle {
+  display: grid;
+  grid-template-columns: repeat(2, 4px);
+  grid-auto-rows: 4px;
+  gap: 3px;
+  padding: 4px;
+  cursor: grab;
+  opacity: 0.7;
+  justify-content: center;
+  align-items: center;
+}
+
+.drag-handle span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #999;
+}
+
+.drag-handle:hover {
+  opacity: 1;
+}
+
+/* --------- MODAL (AddServiceModal) ------------------------ */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 9999;
+
+  animation: modal-fade-in 0.2s ease;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-panel {
+  background: #fffafc;
+  border-radius: 18px;
+  padding: 22px 22px 18px;
+  width: 520px;
+  max-width: 92%;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+  animation: modal-zoom-in 0.18s ease;
+}
+
+@keyframes modal-zoom-in {
+  from { transform: scale(0.94); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--vv-border, #f0cfe0);
+}
+
+.modal-header h2 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #b23561;
+  display: flex;
+}
+
+/* body */
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--vv-border, #f0cfe0);
+  background: #fff;
+  outline: none;
+  font-size: 0.95rem;
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: #b23561;
+  box-shadow: 0 0 0 2px rgba(178, 53, 97, 0.18);
+}
+
+.textarea {
+  resize: vertical;
+}
+
+/* category select + new input */
+.category-flex {
+  display: flex;
+  gap: 8px;
+}
+
+/* 2-column layout for price/duration rows */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* checkbox row */
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+/* footer buttons */
+.modal-footer {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn {
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.15s ease, box-shadow 0.15s ease,
+    transform 0.12s ease;
+}
+
+.btn.cancel {
+  background: #f4d7e0;
+  color: #b23561;
+}
+
+.btn.save {
+  background: #b23561;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(178, 53, 97, 0.3);
+}
+
+.btn.save:hover {
+  background: #992b53;
+  transform: translateY(-1px);
+}

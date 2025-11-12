@@ -1,6 +1,4 @@
-// /lib/serviceCache.ts
-
-// Simple in-memory cache shared across components
+// Simple in-memory cache for services
 const serviceCache = new Map<string, any>();
 
 export const setServiceInCache = (service: any) => {

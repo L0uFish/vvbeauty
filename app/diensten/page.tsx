@@ -3,7 +3,7 @@ import { getServerSupabase } from "@/lib/supabaseServer"; // ✅ server-side Sup
 import HeroCarousel from "../components/home/HeroCarousel";
 import Header from "../components/home/LoginBtn";
 import HomeButton from "../components/home/HomeButton";
-import { setMultipleServices } from "@/lib/serviceCache"; // ✅ local cache for /plannen
+import { getServiceFromCache, setMultipleServices } from "@/app/services/serviceCahce";
 import "../styles/diensten.css";
 
 export default async function Boeking() {

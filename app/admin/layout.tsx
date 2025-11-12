@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, PropsWithChildren } from "react";
-import "@/app/admin/styles/admin.css";
+import "@/app/admin/styles/general.css";
 
 const NavLink = ({ href, label }: { href: string; label: string }) => {
   const pathname = usePathname();
@@ -35,7 +35,6 @@ export default function AdminLayout({ children }: PropsWithChildren) {
 
       {/* Sidebar */}
       <aside className={`admin-sidebar ${sidebarOpen ? "open" : ""}`}>
-        <h2>VVBeauty Admin</h2>
         <nav onClick={handleNavClick}>
           <NavLink href="/admin/kalender" label="📅 Kalender" />
           <NavLink href="/admin/klanten" label="👥 Klanten" />
