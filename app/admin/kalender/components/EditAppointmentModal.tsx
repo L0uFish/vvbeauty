@@ -5,66 +5,85 @@ import { useEffect, useState } from "react";
 import { getTimeslotsForDate } from "@/app/services/timeslotsEngine";
 import { GeneralHour, CustomHour, BlockedHour } from "@/app/types/scheduling";
 
-export default function AddAppointmentModal({
+export default function EditAppointmentModal({
   open,
   onClose,
-  onAdded,
+  appointment,
+  onUpdated,
   generalHours,
   customHours,
   blockedHours,
 }: {
   open: boolean;
   onClose: () => void;
-  onAdded?: () => void;
+  appointment: any;
+  onUpdated?: () => void;
   generalHours: GeneralHour[];
   customHours: CustomHour[];
   blockedHours: BlockedHour[];
 }) {
   const [clients, setClients] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
+
   const [selectedClient, setSelectedClient] = useState<string>("");
   const [selectedService, setSelectedService] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("confirmed");
+
   const [step, setStep] = useState<"form" | "confirm" | "success">("form");
 
   const [times, setTimes] = useState<string[]>([]);
-  const [loadingTimes, setLoadingTimes] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Fetch clients + services
+  // Load clients + services
   useEffect(() => {
     if (!open) return;
+
     (async () => {
       const [{ data: c }, { data: s }] = await Promise.all([
-        supabase.from("clients").select("id, full_name").order("full_name", { ascending: true }),
+        supabase.from("clients").select("id, full_name").order("full_name"),
         supabase
           .from("services")
           .select("id, name, duration_minutes, buffer_minutes")
-          .order("name", { ascending: true }),
+          .order("name"),
       ]);
+
       setClients(c ?? []);
       setServices(s ?? []);
     })();
   }, [open]);
 
-  // Load available times
+  // Prefill fields
   useEffect(() => {
-    if (!selectedDate || !selectedService) {
-      setTimes([]);
-      return;
-    }
+    if (!open || !appointment) return;
+
+    setSelectedClient(appointment.user_id);
+    setSelectedDate(appointment.date);
+    setSelectedTime(appointment.time);
+    setSelectedStatus(appointment.status);
+  }, [open, appointment]);
+
+  // Pick the original service
+  useEffect(() => {
+    if (!appointment || services.length === 0) return;
+    const svc = services.find((s) => s.id === appointment.service_id);
+    if (svc) setSelectedService(svc);
+  }, [services, appointment]);
+
+  // Load timeslots
+  useEffect(() => {
+    if (!selectedDate || !selectedService) return;
 
     (async () => {
-      setLoadingTimes(true);
+      setLoading(true);
 
       const { data: appointments } = await supabase
         .from("appointments")
         .select("time, duration_minutes, buffer_minutes, status")
         .eq("date", selectedDate)
         .not("status", "eq", "cancelled");
-
-
-
+        
       const activeBlocked = blockedHours.filter((b) => b.blocked_date === selectedDate);
 
       const slots = getTimeslotsForDate({
@@ -77,66 +96,60 @@ export default function AddAppointmentModal({
       });
 
       setTimes(slots);
-      setLoadingTimes(false);
+      setLoading(false);
     })();
   }, [selectedDate, selectedService, generalHours, customHours, blockedHours]);
 
-  // Form submit
-  const handleSubmit = (e: React.FormEvent) => {
+  const submitForm = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedClient || !selectedService || !selectedDate || !selectedTime)
-      return alert("Vul alle velden in.");
+    if (!selectedClient || !selectedService || !selectedDate || !selectedTime) {
+      alert("Vul alle velden in.");
+      return;
+    }
     setStep("confirm");
   };
 
-  // Confirm insert
   const handleConfirm = async () => {
-    const { error } = await supabase.from("appointments").insert({
-      user_id: selectedClient,
-      service_id: selectedService.id,
-      date: selectedDate,
-      time: selectedTime,
-      status: "confirmed",
-    });
+    const { error } = await supabase
+      .from("appointments")
+      .update({
+        user_id: selectedClient,
+        service_id: selectedService.id,
+        date: selectedDate,
+        time: selectedTime,
+        status: selectedStatus,
+      })
+      .eq("id", appointment.id);
 
     if (error) {
-      console.error("❌ FOUT:", error);
-      alert("Kon afspraak niet opslaan.");
+      console.error("❌ Fout bij aanpassen afspraak:", error);
+      alert("Fout bij opslaan van afspraak");
       return;
     }
 
     setStep("success");
     setTimeout(() => {
-      onAdded?.();
+      onUpdated?.();
       onClose();
       setStep("form");
-      resetForm();
     }, 1500);
   };
 
-  const resetForm = () => {
-    setSelectedClient("");
-    setSelectedService(null);
-    setSelectedDate("");
-    setSelectedTime("");
-  };
-
-  if (!open) return null;
+  if (!open || !appointment) return null;
 
   return (
-    <div onClick={onClose} style={modalOverlay}>
+    <div onClick={onClose} style={overlay}>
       <div onClick={(e) => e.stopPropagation()} style={modal}>
+        {/* FORM */}
         {step === "form" && (
           <>
-            <h3 style={title}>Nieuwe Afspraak</h3>
+            <h3 style={title}>Afspraak bewerken</h3>
 
-            <form onSubmit={handleSubmit} style={form}>
-              {/* CLIENT */}
-              <label style={label}>Klant</label>
+            <form onSubmit={submitForm} style={form}>
+              <label>Klant</label>
               <select
                 value={selectedClient}
                 onChange={(e) => setSelectedClient(e.target.value)}
-                required
                 style={dropdown}
               >
                 <option value="">Kies klant</option>
@@ -147,14 +160,12 @@ export default function AddAppointmentModal({
                 ))}
               </select>
 
-              {/* SERVICE */}
-              <label style={label}>Behandeling</label>
+              <label>Behandeling</label>
               <select
                 value={selectedService?.id || ""}
                 onChange={(e) =>
                   setSelectedService(services.find((s) => s.id === e.target.value) || null)
                 }
-                required
                 style={dropdown}
               >
                 <option value="">Kies service</option>
@@ -165,27 +176,23 @@ export default function AddAppointmentModal({
                 ))}
               </select>
 
-              {/* DATE */}
-              <label style={label}>Datum</label>
+              <label>Datum</label>
               <input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                required
                 style={input}
               />
 
-              {/* TIME */}
-              <label style={label}>Tijdslot</label>
+              <label>Tijdslot</label>
               <select
                 value={selectedTime}
                 onChange={(e) => setSelectedTime(e.target.value)}
-                required
                 style={dropdown}
               >
                 <option value="">Kies tijd</option>
-                {loadingTimes && <option>Laden...</option>}
-                {!loadingTimes &&
+                {loading && <option>Laden...</option>}
+                {!loading &&
                   times.map((t: string) => (
                     <option key={t} value={t}>
                       {t}
@@ -208,14 +215,19 @@ export default function AddAppointmentModal({
         {/* CONFIRM */}
         {step === "confirm" && (
           <div style={{ textAlign: "center" }}>
-            <h3 style={title}>Bevestig Afspraak</h3>
+            <h3 style={title}>Bevestigen</h3>
             <p><strong>Klant:</strong> {clients.find(c => c.id === selectedClient)?.full_name}</p>
             <p><strong>Behandeling:</strong> {selectedService?.name}</p>
             <p><strong>Datum:</strong> {selectedDate}</p>
             <p><strong>Tijd:</strong> {selectedTime}</p>
+
             <div style={btnRow}>
-              <button onClick={() => setStep("form")} style={cancelBtn}>Terug</button>
-              <button onClick={handleConfirm} style={confirmBtn}>Bevestigen</button>
+              <button onClick={() => setStep("form")} style={cancelBtn}>
+                Terug
+              </button>
+              <button onClick={handleConfirm} style={confirmBtn}>
+                Opslaan
+              </button>
             </div>
           </div>
         )}
@@ -223,7 +235,7 @@ export default function AddAppointmentModal({
         {/* SUCCESS */}
         {step === "success" && (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
-            <h3 style={title}>🌸 Afspraak toegevoegd!</h3>
+            <h3 style={title}>🌸 Afspraak aangepast!</h3>
           </div>
         )}
       </div>
@@ -232,49 +244,63 @@ export default function AddAppointmentModal({
 }
 
 /* --- Styles --- */
-const modalOverlay: React.CSSProperties = {
+const overlay: React.CSSProperties = {
   position: "fixed",
   inset: 0,
   background: "rgba(0,0,0,0.35)",
   display: "grid",
   placeItems: "center",
-  zIndex: 60,
+  zIndex: 50,
 };
 
 const modal: React.CSSProperties = {
-  width: "min(90vw,420px)",
   background: "#fff",
-  borderRadius: 18,
   padding: 22,
-  boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+  width: "min(90vw, 420px)",
+  borderRadius: 18,
+  boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
 };
 
-const form: React.CSSProperties = { display: "flex", flexDirection: "column", gap: "12px" };
-const title: React.CSSProperties = { textAlign: "center", color: "var(--vv-primary)" };
-const label: React.CSSProperties = { fontWeight: 600 };
+const title: React.CSSProperties = {
+  marginBottom: 12,
+  textAlign: "center",
+  color: "var(--vv-primary)",
+};
+
+const form: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 12,
+};
 
 const input: React.CSSProperties = {
   width: "100%",
   padding: "8px",
   borderRadius: 10,
-  border: "1px solid var(--vv-border)",
+  border: "1px solid #ddd",
 };
 
-const dropdown = { ...input, background: "#fff", cursor: "pointer" };
-const btnRow = { display: "flex", justifyContent: "flex-end", gap: "10px" };
+const dropdown = input;
+
+const btnRow: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "flex-end",
+  gap: 10,
+};
 
 const cancelBtn: React.CSSProperties = {
-  padding: "8px 16px",
+  padding: "8px 14px",
   borderRadius: 10,
-  background: "#fafafa",
+  background: "#f1f1f1",
   border: "1px solid #ddd",
   cursor: "pointer",
 };
 
 const confirmBtn: React.CSSProperties = {
-  padding: "8px 16px",
+  padding: "8px 14px",
   borderRadius: 10,
   background: "var(--vv-primary)",
   color: "#fff",
   cursor: "pointer",
+  border: "none",
 };

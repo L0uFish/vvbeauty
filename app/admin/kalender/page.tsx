@@ -1,4 +1,3 @@
-// app/admin/kalender/page.tsx
 "use client";
 
 import { supabase } from "@/lib/supabaseClient";
@@ -8,7 +7,13 @@ import ActionChooserModal from "./components/ActionChooserModal";
 import DayView from "./components/DayView";
 import MonthView from "./components/MonthView";
 import YearView from "./components/YearView";
-import { View, Appointment, BlockedHour, GeneralHour, CustomHour } from "@/app/types/scheduling";
+import {
+  View,
+  Appointment,
+  BlockedHour,
+  GeneralHour,
+  CustomHour,
+} from "@/app/types/scheduling";
 import AddAppointmentModal from "./components/AddAppointmentModal";
 import CustomHoursModal from "./components/CustomHoursModal";
 import BlockHoursModal from "./components/BlockHoursModal";
@@ -22,7 +27,9 @@ function getDateKey(date: Date) {
 }
 
 export default function KalenderPage() {
-  const [view, setView] = useState<View>("day");
+  // ⭐ DEFAULT → MONTH VIEW
+  const [view, setView] = useState<View>("month");
+
   const [cursorDate, setCursorDate] = useState(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [blockedHours, setBlockedHours] = useState<BlockedHour[]>([]);
@@ -36,7 +43,7 @@ export default function KalenderPage() {
   const [customOpen, setCustomOpen] = useState(false);
   const [blockOpen, setBlockOpen] = useState(false);
 
-  // action chooser modal
+  // action chooser
   const [chooserOpen, setChooserOpen] = useState(false);
   const openChooser = () => setChooserOpen(true);
   const closeChooser = () => setChooserOpen(false);
@@ -50,7 +57,7 @@ export default function KalenderPage() {
     if (action === "block-hours") setBlockOpen(true);
   };
 
-  // swipe support for mobile
+  // swipe navigation for mobile
   const touchStartX = useRef<number | null>(null);
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -64,13 +71,14 @@ export default function KalenderPage() {
     touchStartX.current = null;
   };
 
-  // FETCH ALL DATA
+  // FETCH DATA for current view range
   useEffect(() => {
     (async () => {
       setLoading(true);
 
       const start = new Date(cursorDate);
       const end = new Date(cursorDate);
+
       if (view === "day") end.setDate(end.getDate() + 1);
       if (view === "month") {
         start.setDate(1);
@@ -84,19 +92,17 @@ export default function KalenderPage() {
       const startISO = getDateKey(start);
       const endISO = getDateKey(end);
 
-      // Appointments
+      // --- Appointments ---
       const { data: rawAppts } = await supabase
         .from("appointments")
         .select("*")
         .gte("date", startISO)
         .lt("date", endISO)
-        .order("date", { ascending: true })
-        .order("time", { ascending: true });
+        .order("date")
+        .order("time");
 
-      const serviceIds =
-        rawAppts?.map((a: any) => a.service_id).filter(Boolean) ?? [];
-      const userIds =
-        rawAppts?.map((a: any) => a.user_id).filter(Boolean) ?? [];
+      const serviceIds = [...new Set(rawAppts?.map(a => a.service_id).filter(Boolean) ?? [])];
+      const userIds = [...new Set(rawAppts?.map(a => a.user_id).filter(Boolean) ?? [])];
 
       const [{ data: services }, { data: clients }] = await Promise.all([
         supabase
@@ -112,45 +118,47 @@ export default function KalenderPage() {
       const mapped: Appointment[] =
         rawAppts?.map((a: any) => ({
           id: a.id,
+          user_id: a.user_id,
+          service_id: a.service_id,
           date: a.date,
           time: a.time,
           status: a.status,
           note: a.note ?? null,
+
           client_name: cMap.get(a.user_id)?.full_name ?? "—",
           service_name: sMap.get(a.service_id)?.name ?? "—",
+
           service: {
             duration_minutes:
-              sMap.get(a.service_id)?.duration_minutes ?? null,
-            buffer_minutes: sMap.get(a.service_id)?.buffer_minutes ?? null,
+              sMap.get(a.service_id)?.duration_minutes ?? a.duration_minutes,
+            buffer_minutes:
+              sMap.get(a.service_id)?.buffer_minutes ?? a.buffer_minutes,
           },
         })) ?? [];
 
-      // Blocked Hours
+      // --- Blocked hours ---
       const { data: blocks } = await supabase
         .from("blocked_hours")
-        .select(
-          "id, blocked_date, time_from, time_until, notes, repeat_type"
-        )
+        .select("id, blocked_date, time_from, time_until, notes, repeat_type")
         .gte("blocked_date", startISO)
         .lt("blocked_date", endISO)
-        .order("blocked_date", { ascending: true });
+        .order("blocked_date");
 
-      // General Hours
+      // --- General hours ---
       const { data: hours } = await supabase
         .from("general_hours")
-        .select("id, weekday, is_closed, open_time, close_time");
+        .select("weekday, is_closed, open_time, close_time");
 
-      // Custom Hours (overrides)
+      // --- Custom hours ---
       const { data: custom } = await supabase
         .from("custom_hours")
         .select(
-          "id, type, date, week_start, month, year, open_time, close_time, is_closed, notes"
+          "id, type, date, open_time, close_time, is_closed, notes"
         )
         .gte("date", startISO)
         .lt("date", endISO)
-        .order("date", { ascending: true });
+        .order("date");
 
-      // Apply all
       setAppointments(mapped);
       setBlockedHours(blocks ?? []);
       setGeneralHours(hours ?? []);
@@ -176,7 +184,6 @@ export default function KalenderPage() {
     setCursorDate(d);
   };
 
-  // Helper to check if a weekday is normally closed
   const isClosedDay = (date: Date) => {
     const weekday = date
       .toLocaleString("en-US", { weekday: "long" })
@@ -185,18 +192,16 @@ export default function KalenderPage() {
     return entry?.is_closed ?? false;
   };
 
-  // Calendar title
   const title = (() => {
     const y = cursorDate.getFullYear();
+    if (view === "year") return `${y}`;
     const m = cursorDate.toLocaleString("nl-BE", { month: "long" });
-    const d = cursorDate.toLocaleDateString("nl-BE", {
+    if (view === "month") return `${m} ${y}`;
+    return cursorDate.toLocaleDateString("nl-BE", {
       weekday: "long",
       day: "2-digit",
       month: "2-digit",
     });
-    if (view === "day") return d;
-    if (view === "month") return `${m} ${y}`;
-    return `${y}`;
   })();
 
   return (
@@ -212,27 +217,40 @@ export default function KalenderPage() {
           onNext={moveNext}
           onOpenActionChooser={openChooser}
         >
+          {/* === DAY VIEW === */}
           {!loading && view === "day" && (
             <DayView
               date={cursorDate}
               appts={appointments}
               blocks={blockedHours}
               customHours={customHours}
+              generalHours={generalHours}
               showCancelled={showCancelled}
               isClosedDay={isClosedDay}
+              onAppointmentUpdated={() =>
+                setCursorDate(new Date(cursorDate))
+              }
             />
           )}
+
+          {/* === MONTH VIEW === */}
           {!loading && view === "month" && (
             <MonthView
               date={cursorDate}
               appts={appointments}
               blocks={blockedHours}
               customHours={customHours}
+              generalHours={generalHours}
               showCancelled={showCancelled}
               isClosedDay={isClosedDay}
+              onSelectDay={(d) => {
+                setView("day");
+                setCursorDate(new Date(d));
+              }}
             />
           )}
-          {/* FIXED: Removed `generalHours` prop from YearView */}
+
+          {/* === YEAR VIEW === */}
           {!loading && view === "year" && (
             <YearView
               date={cursorDate}
@@ -241,19 +259,26 @@ export default function KalenderPage() {
               customHours={customHours}
               showCancelled={showCancelled}
               isClosedDay={isClosedDay}
+              onSelectMonth={(m) => {
+                setView("month");
+                setCursorDate(new Date(m));
+              }}
+              onSelectDay={(d) => {
+                setView("day");
+                setCursorDate(new Date(d));
+              }}
             />
           )}
         </AdminCalendarLayout>
       </div>
 
-      {/* ACTION PICKER */}
+      {/* MODALS */}
       <ActionChooserModal
         open={chooserOpen}
         onClose={closeChooser}
         onPick={handlePickAction}
       />
 
-      {/* ADD APPOINTMENT */}
       {addOpen && (
         <AddAppointmentModal
           open={addOpen}
@@ -262,10 +287,12 @@ export default function KalenderPage() {
             setAddOpen(false);
             setCursorDate(new Date(cursorDate));
           }}
+          generalHours={generalHours}
+          customHours={customHours}
+          blockedHours={blockedHours}
         />
       )}
 
-      {/* CUSTOM HOURS */}
       {customOpen && (
         <CustomHoursModal
           open={customOpen}
@@ -277,7 +304,6 @@ export default function KalenderPage() {
         />
       )}
 
-      {/* BLOCK HOURS */}
       {blockOpen && (
         <BlockHoursModal
           open={blockOpen}

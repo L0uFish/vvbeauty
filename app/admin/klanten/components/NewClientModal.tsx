@@ -24,7 +24,8 @@ export default function NewClientModal({
 
     try {
       setSaving(true);
-      const tempPassword = Math.random().toString(36).slice(-10) + "A1!";
+      const tempPassword =
+        Math.random().toString(36).slice(-10) + "A1!";
 
       const { error: authError } = await supabase.auth.signUp({
         email: email.trim(),
@@ -52,7 +53,7 @@ export default function NewClientModal({
       await new Promise((resolve) => setTimeout(resolve, 1000));
       await onAdded();
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       alert("Er ging iets mis bij het opslaan van de klant.");
     } finally {
@@ -62,7 +63,10 @@ export default function NewClientModal({
 
   return (
     <div className="add-client-modal" onClick={onClose}>
-      <div className="add-client-content" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="add-client-content"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h3>Nieuwe Klant</h3>
 
         <input
@@ -87,14 +91,6 @@ export default function NewClientModal({
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
-          style={{
-            resize: "none",
-            borderRadius: "8px",
-            border: "1px solid var(--vv-border)",
-            padding: "8px 10px",
-            fontFamily: "var(--font-main)",
-            fontSize: "14px",
-          }}
         />
 
         <div className="add-client-actions">
@@ -105,7 +101,6 @@ export default function NewClientModal({
             onClick={handleSave}
             className="confirm"
             disabled={saving}
-            style={{ opacity: saving ? 0.7 : 1 }}
           >
             {saving ? "Opslaan…" : "Opslaan"}
           </button>

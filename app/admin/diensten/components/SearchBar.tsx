@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
-import { Search } from "lucide-react"; // install with: npm i lucide-react
+import { Search } from "lucide-react";
 
 export default function SearchBar({ initialQuery }: { initialQuery: string }) {
   const router = useRouter();
@@ -16,14 +16,14 @@ export default function SearchBar({ initialQuery }: { initialQuery: string }) {
   }, 300);
 
   return (
-    <div className="searchbar-wrapper">
-      <Search className="search-icon" size={18} />
+    <div className="services-search-wrapper">
+      <Search className="services-search-icon" size={18} />
       <input
         type="text"
         placeholder="Zoek diensten..."
         defaultValue={initialQuery}
         onChange={(e) => handleSearch(e.target.value)}
-        className="search-input"
+        className="services-search"
       />
     </div>
   );

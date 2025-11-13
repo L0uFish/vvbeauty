@@ -1,9 +1,8 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "@/lib/supabaseClient";
 import type { Appointment } from "@/app/types/scheduling";
-
 
 type ClientRow = {
   id: string;
@@ -13,16 +12,16 @@ type ClientRow = {
   notes: string | null;
 };
 
-export default function ClientDetail({ params }: { params: { id: string } }) {
-  const supabase = useMemo(() => createClientComponentClient(), []);
+export default function ClientDetail() {
   const { id } = useParams<{ id: string }>();
   const [client, setClient] = useState<ClientRow | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // === FETCH CLIENT + APPOINTMENTS ===
   useEffect(() => {
     (async () => {
+      if (!id) return;
+
       setLoading(true);
 
       const { data: clientData, error: clientErr } = await supabase
@@ -36,38 +35,37 @@ export default function ClientDetail({ params }: { params: { id: string } }) {
 
       const { data: appts, error: apptErr } = await supabase
         .from("appointments")
-        .select(
-          `
+        .select(`
           id, date, time, status,
           service:services(name, price, promo_price)
-        `
-        )
+        `)
         .eq("user_id", id)
         .order("date", { ascending: false });
 
       if (apptErr) console.error(apptErr);
 
-      // ✅ QUICK FIX: bypass type mismatch
       setAppointments((appts as any) ?? []);
       setLoading(false);
     })();
-  }, [supabase, id]);
+  }, [id]);
 
-  // === INLINE UPDATE HANDLER ===
   const handleInlineUpdate = async (
     field: keyof ClientRow,
     value: string
   ) => {
     if (!client) return;
+
     const { error } = await supabase
       .from("clients")
       .update({ [field]: value })
       .eq("id", client.id);
+
     if (error) return alert("❌ Fout bij updaten.");
+
     setClient({ ...client, [field]: value });
   };
 
-  // === STATS ===
+  // Stats
   const totalSpent = appointments.reduce((sum, a) => {
     const price =
       (a as any).service?.promo_price ??
@@ -93,6 +91,7 @@ export default function ClientDetail({ params }: { params: { id: string } }) {
   const past = appointments.filter(
     (a) => new Date(a.date) < new Date()
   );
+
   const nextAppt = future[future.length - 1];
   const lastAppt = past[0];
 
@@ -101,7 +100,6 @@ export default function ClientDetail({ params }: { params: { id: string } }) {
       {loading && <p>Laden…</p>}
       {!loading && client && (
         <>
-          {/* ===== CLIENT HEADER ===== */}
           <div className="client-top">
             <EditableField
               label="Naam"
@@ -129,7 +127,6 @@ export default function ClientDetail({ params }: { params: { id: string } }) {
             />
           </div>
 
-          {/* ===== HIGHLIGHTS ===== */}
           <div className="appt-highlights">
             <div>
               <h4>Volgende afspraak</h4>
@@ -157,10 +154,10 @@ export default function ClientDetail({ params }: { params: { id: string } }) {
             </div>
           </div>
 
-          {/* ===== APPOINTMENT LIST ===== */}
           <div className="appt-list">
             <h3>Toekomstige afspraken</h3>
             {future.length === 0 && <p>Geen toekomstige afspraken.</p>}
+
             {future.map((a) => (
               <div key={a.id} className="appt-item">
                 <span>
@@ -177,6 +174,7 @@ export default function ClientDetail({ params }: { params: { id: string } }) {
 
             <h3>Voorbije afspraken</h3>
             {past.length === 0 && <p>Geen voorbije afspraken.</p>}
+
             {past.map((a) => (
               <div key={a.id} className="appt-item">
                 <span>
@@ -197,7 +195,6 @@ export default function ClientDetail({ params }: { params: { id: string } }) {
   );
 }
 
-/* ===== EditableField Component ===== */
 function EditableField({
   label,
   value,

@@ -1,7 +1,11 @@
-// app/admin/kalender/components/MonthView.tsx
 "use client";
 import React from "react";
-import { Appointment, BlockedHour, CustomHour } from "@/app/types/scheduling";
+import {
+  Appointment,
+  BlockedHour,
+  CustomHour,
+  GeneralHour,
+} from "@/app/types/scheduling";
 import { getDateKey, getRecurringBlockedHours } from "@/app/utils/date";
 
 export default function MonthView({
@@ -9,30 +13,38 @@ export default function MonthView({
   appts,
   blocks,
   customHours,
+  generalHours,
   showCancelled,
   isClosedDay,
+  onSelectDay,
 }: {
   date: Date;
   appts: Appointment[];
   blocks: BlockedHour[];
-  customHours?: CustomHour[];
+  customHours: CustomHour[];
+  generalHours: GeneralHour[];
   showCancelled: boolean;
   isClosedDay: (d: Date) => boolean;
+  onSelectDay: (d: Date) => void;
 }) {
   const y = date.getFullYear();
   const m = date.getMonth();
 
   const first = new Date(y, m, 1);
+
+  // Monday-start grid
   const start = new Date(first);
-  const offset = (first.getDay() + 6) % 7; // Monday = 0
+  const offset = (first.getDay() + 6) % 7;
   start.setDate(first.getDate() - offset);
 
+  // 6-week full grid (42 cells)
   const cells = Array.from({ length: 42 }, (_, i) => {
     const d = new Date(start);
     d.setDate(start.getDate() + i);
     return d;
   });
 
+  // Map appointments by date
   const byDay = new Map<string, { appts: Appointment[] }>();
   for (const c of cells) byDay.set(getDateKey(c), { appts: [] });
 
@@ -43,7 +55,7 @@ export default function MonthView({
 
   const getCustomForDate = (d: Date) => {
     const key = getDateKey(d);
-    return customHours?.find((ch) => ch.date === key) ?? null;
+    return customHours.find((c) => c.date === key) ?? null;
   };
 
   return (
@@ -57,37 +69,45 @@ export default function MonthView({
       {cells.map((d, i) => {
         const key = getDateKey(d);
         const { appts: aps } = byDay.get(key)!;
+
         const out = d.getMonth() !== m;
 
         const bls = getRecurringBlockedHours(blocks, key, d);
-
         const custom = getCustomForDate(d);
+
+        const customClosed = custom?.is_closed === true;
+        const customOpen = custom && !custom.is_closed;
+
         const closedNormally = isClosedDay(d);
-        const isCustomClosed = custom?.is_closed === true;
-        const isCustomOpen = custom && !custom.is_closed && (custom.open_time || custom.close_time);
-        const isClosed = isCustomClosed || (!isCustomOpen && closedNormally);
+
+        const isClosed = customClosed || (!customOpen && closedNormally);
 
         const classNames = [
           "mcell",
           out ? "out" : "",
           isClosed ? "closed" : "",
-          isCustomOpen ? "custom-open" : "",
-          isCustomClosed ? "custom-closed" : "",
+          customOpen ? "custom-open" : "",
+          customClosed ? "custom-closed" : "",
         ].join(" ");
 
         const label =
-          isCustomClosed
+          customClosed
             ? custom?.notes
               ? `Gesloten (${custom.notes})`
               : "Gesloten"
-            : isCustomOpen
+            : customOpen
             ? `Open ${custom.open_time?.slice(0, 5)}–${custom.close_time?.slice(0, 5)}`
             : isClosed
             ? "Gesloten"
             : "";
 
         return (
-          <div key={i} className={classNames}>
+          <div
+            key={i}
+            className={classNames}
+            onClick={() => onSelectDay(d)}
+            style={{ cursor: "pointer" }}
+          >
             <div className="mdate">{d.getDate()}</div>
 
             {label && (
@@ -107,7 +127,9 @@ export default function MonthView({
               {aps.map((a, idx) => (
                 <div
                   key={idx}
-                  className={`line ${a.status === "cancelled" ? "grey" : "green"}`}
+                  className={`line ${
+                    a.status === "cancelled" ? "grey" : "green"
+                  }`}
                   title={`${a.time} ${a.client_name} — ${a.service_name}`}
                 >
                   <span className="mini-label">
@@ -115,13 +137,18 @@ export default function MonthView({
                   </span>
                 </div>
               ))}
+
               {bls.map((b, idx) => (
                 <div
                   key={"b" + idx}
                   className="line red"
-                  title={`Geblokkeerd: ${b.time_from}–${b.time_until}${b.notes ? " (" + b.notes + ")" : ""}`}
+                  title={`Geblokkeerd: ${b.time_from}–${b.time_until}${
+                    b.notes ? " (" + b.notes + ")" : ""
+                  }`}
                 >
-                  <span className="mini-label">Blok: {b.time_from.slice(0, 5)}</span>
+                  <span className="mini-label">
+                    Blok: {b.time_from.slice(0, 5)}
+                  </span>
                 </div>
               ))}
             </div>

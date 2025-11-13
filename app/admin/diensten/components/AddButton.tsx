@@ -9,7 +9,7 @@ export default function AddButton() {
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="add-button">
+      <button onClick={() => setOpen(true)} className="btn-addservice">
         + Nieuwe dienst
       </button>
       {open && <AddServiceModal onClose={() => setOpen(false)} />}

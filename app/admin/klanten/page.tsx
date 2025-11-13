@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "@/lib/supabaseClient";
 import "@/app/admin/styles/klanten.css";
 import NewClientModal from "./components/NewClientModal";
 
@@ -14,7 +14,6 @@ type ClientRow = {
 };
 
 export default function KlantenPage() {
-  const supabase = useMemo(() => createClientComponentClient(), []);
   const [rows, setRows] = useState<ClientRow[]>([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
@@ -27,6 +26,7 @@ export default function KlantenPage() {
       .from("clients")
       .select("id, full_name, notes, phone, email")
       .order("full_name", { ascending: true });
+
     if (error) console.error(error);
     setRows(data ?? []);
     setLoading(false);
@@ -34,24 +34,46 @@ export default function KlantenPage() {
 
   useEffect(() => {
     fetchClients();
-  }, [supabase]);
+  }, []); // no supabase dependency
 
   const filtered = rows.filter((r) => {
-    const hay = `${r.full_name} ${r.notes ?? ""} ${r.phone ?? ""} ${r.email ?? ""}`.toLowerCase();
+    const hay =
+      `${r.full_name} ${r.notes ?? ""} ${r.phone ?? ""} ${r.email ?? ""}`.toLowerCase();
     return hay.includes(q.toLowerCase());
   });
 
-  const handleInlineUpdate = async (id: string, key: keyof ClientRow, value: string) => {
-    const { error } = await supabase.from("clients").update({ [key]: value }).eq("id", id);
+  const handleInlineUpdate = async (
+    id: string,
+    key: keyof ClientRow,
+    value: string
+  ) => {
+    const { error } = await supabase
+      .from("clients")
+      .update({ [key]: value })
+      .eq("id", id);
+
     if (error) return alert("❌ Fout bij updaten.");
-    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, [key]: value } : r)));
+
+    setRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, [key]: value } : r))
+    );
   };
 
   const handleDelete = async (client: ClientRow) => {
-    const confirmName = prompt(`⚠️ Typ de naam om te bevestigen:\n\n${client.full_name}`);
-    if (confirmName !== client.full_name) return alert("Naam komt niet overeen, geannuleerd.");
-    const { error } = await supabase.from("clients").delete().eq("id", client.id);
+    const confirmName = prompt(
+      `⚠️ Typ de naam om te bevestigen:\n\n${client.full_name}`
+    );
+
+    if (confirmName !== client.full_name)
+      return alert("Naam komt niet overeen, geannuleerd.");
+
+    const { error } = await supabase
+      .from("clients")
+      .delete()
+      .eq("id", client.id);
+
     if (error) return alert("❌ Fout bij verwijderen.");
+
     setRows((p) => p.filter((r) => r.id !== client.id));
   };
 
@@ -64,6 +86,7 @@ export default function KlantenPage() {
     <div className="client-page">
       <div className="client-toolbar">
         <h1>Klanten</h1>
+
         <div className="toolbar-controls">
           <input
             className="client-search"
@@ -94,6 +117,7 @@ export default function KlantenPage() {
 
           <div className="tbody">
             {loading && <div className="muted">Laden…</div>}
+
             {!loading &&
               filtered.map((r) => (
                 <div className="client-tr" key={r.id}>
@@ -102,10 +126,24 @@ export default function KlantenPage() {
                       👤
                     </Link>
                   </div>
-                  <EditableCell value={r.full_name} onSave={(v) => handleInlineUpdate(r.id, "full_name", v)} />
-                  <EditableCell value={r.phone} onSave={(v) => handleInlineUpdate(r.id, "phone", v)} />
-                  <EditableCell value={r.email} onSave={(v) => handleInlineUpdate(r.id, "email", v)} />
-                  <NoteCell value={r.notes ?? ""} onSave={(v) => handleInlineUpdate(r.id, "notes", v)} />
+
+                  <EditableCell
+                    value={r.full_name}
+                    onSave={(v) => handleInlineUpdate(r.id, "full_name", v)}
+                  />
+                  <EditableCell
+                    value={r.phone}
+                    onSave={(v) => handleInlineUpdate(r.id, "phone", v)}
+                  />
+                  <EditableCell
+                    value={r.email}
+                    onSave={(v) => handleInlineUpdate(r.id, "email", v)}
+                  />
+                  <NoteCell
+                    value={r.notes ?? ""}
+                    onSave={(v) => handleInlineUpdate(r.id, "notes", v)}
+                  />
+
                   <div className="client-actions">
                     <button className="btn-delete" onClick={() => handleDelete(r)}>
                       ❌
@@ -113,7 +151,10 @@ export default function KlantenPage() {
                   </div>
                 </div>
               ))}
-            {!loading && filtered.length === 0 && <div className="muted">Geen resultaten.</div>}
+
+            {!loading && filtered.length === 0 && (
+              <div className="muted">Geen resultaten.</div>
+            )}
           </div>
         </div>
       </div>
@@ -142,7 +183,9 @@ function EditableCell({
 }) {
   const [v, setV] = useState(value);
   const [edit, setEdit] = useState(false);
+
   useEffect(() => setV(value), [value]);
+
   return (
     <div className="client-cell" onDoubleClick={() => setEdit(true)}>
       {!edit ? (
@@ -178,15 +221,15 @@ function NoteCell({
 }) {
   const [edit, setEdit] = useState(false);
   const [v, setV] = useState(value);
-  const truncated =
-    value && value.length > 40 ? value.slice(0, 40) + "…" : value || "—";
 
   useEffect(() => setV(value), [value]);
 
   return (
     <div className="client-cell" onDoubleClick={() => setEdit(true)}>
       {!edit ? (
-        <span title={value}>{truncated}</span>
+        <span title={value}>
+          {value && value.length > 40 ? value.slice(0, 40) + "…" : value || "—"}
+        </span>
       ) : (
         <textarea
           autoFocus

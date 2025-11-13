@@ -28,22 +28,26 @@ async function getServices(search?: string): Promise<Service[]> {
   return data as Service[];
 }
 
-export default async function DienstenPage({
-  searchParams,
-}: {
-  searchParams: { q?: string };
+export default async function DienstenPage(props: {
+  searchParams: Promise<{ q?: string }>;
 }) {
-  const search = searchParams.q ?? "";
+  // ⬅️ FIX: unwrap the promise
+  const { q } = await props.searchParams;
+
+  const search = q ?? "";
   const services = await getServices(search);
 
   return (
     <div className="diensten-page">
-      <div className="top-bar">
-        <SearchBar initialQuery={search} />
-        <AddButton />
+      <div className="services-toolbar">
+        <h1>Diensten</h1>
+
+        <div className="services-controls">
+          <SearchBar initialQuery={search} />
+          <AddButton />
+        </div>
       </div>
 
-      {/* Client component with initial data */}
       <ServicesTable initialServices={services} />
     </div>
   );
