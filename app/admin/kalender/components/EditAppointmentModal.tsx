@@ -78,11 +78,28 @@ export default function EditAppointmentModal({
     (async () => {
       setLoading(true);
 
-      const { data: appointments } = await supabase
+      const { data: rows } = await supabase
         .from("appointments")
-        .select("time, duration_minutes, buffer_minutes, status")
+        .select(`
+          time,
+          status,
+          services:service_id (
+            duration_minutes,
+            buffer_minutes
+          )
+        `)
         .eq("date", selectedDate)
-        .not("status", "eq", "cancelled");
+        .neq("status", "cancelled");
+
+      const appointments = (rows ?? []).map((a: any) => {
+        const svc = a.services?.[0];
+        return {
+          time: a.time,
+          duration_minutes: svc?.duration_minutes ?? selectedService.duration_minutes,
+          buffer_minutes: svc?.buffer_minutes ?? selectedService.buffer_minutes,
+        }
+      });
+
         
       const activeBlocked = blockedHours.filter((b) => b.blocked_date === selectedDate);
 

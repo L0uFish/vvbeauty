@@ -41,9 +41,6 @@ export default function AdminLayout({ children }: PropsWithChildren) {
           <NavLink href="/admin/diensten" label="🛠️ Diensten" />
         </nav>
         <hr />
-        <Link href="/" onClick={handleNavClick}>
-          ← Terug naar Website
-        </Link>
       </aside>
 
       {/* Main content */}

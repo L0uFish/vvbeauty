@@ -385,3 +385,78 @@
   border: 2px solid var(--vv-primary);
   box-shadow: 0 0 6px rgba(255, 116, 236, 0.6);
 }
+
+.mcell.past {
+  opacity: 0.45;              /* subtle dim */
+  filter: grayscale(0.25);     /* tiny bit desaturated */
+}
+
+/* =======================
+   MOBILE IMPROVEMENTS
+   ======================= */
+@media (max-width: 600px) {
+  /* Make the full grid breathe */
+  .month-grid.pretty {
+    gap: 4px;
+    padding: 4px;
+  }
+
+  /* Day name row */
+  .dow {
+    font-size: 12px;
+    padding: 4px 0;
+  }
+
+  /* Each day cell */
+  .mcell {
+    min-height: 90px;
+    padding: 6px;
+    border-radius: 10px;
+  }
+
+  .mcell.today {
+    border-width: 2px;
+    box-shadow: 0 0 4px rgba(255, 116, 236, 0.5);
+  }
+
+  .mcell.past {
+    opacity: 0.35;
+    filter: grayscale(0.25);
+  }
+
+  /* Date number */
+  .mdate {
+    font-size: 12px;
+    top: 4px;
+    right: 6px;
+  }
+
+  /* "Open" / "Gesloten" label */
+  .mcustom-note {
+    font-size: 9px !important;
+    margin-bottom: 2px !important;
+  }
+
+  /* Appointment blocks */
+  .mlines {
+    gap: 3px;
+    margin-top: 18px;
+  }
+
+  .line {
+    height: 18px;
+    font-size: 10px;
+    padding-left: 6px;
+    border-radius: 6px;
+  }
+
+  .line .mini-label {
+    font-size: 9px;
+  }
+
+  /* Tooltip */
+  .line[title]:hover::after {
+    font-size: 11px;
+  }
+}
+

@@ -69,6 +69,10 @@ export default function MonthView({
       {cells.map((d, i) => {
         const key = getDateKey(d);
         const { appts: aps } = byDay.get(key)!;
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const isPast = d.getTime() < todayStart.getTime();
 
         const out = d.getMonth() !== m;
 
@@ -90,7 +94,8 @@ export default function MonthView({
           isClosed ? "closed" : "",
           customOpen ? "custom-open" : "",
           customClosed ? "custom-closed" : "",
-          isToday ? "today" : "",   // ⭐ highlight
+          isToday ? "today" : "",
+          isPast ? "past" : "",
         ].join(" ");
 
         const label =
