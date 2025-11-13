@@ -380,3 +380,8 @@
 .tiny-bar[style*="background: #aaa"] {
   background: #bbb !important; /* grey – cancelled */
 }
+
+.mcell.today {
+  border: 2px solid var(--vv-primary);
+  box-shadow: 0 0 6px rgba(255, 116, 236, 0.6);
+}

@@ -79,8 +79,10 @@ export default function MonthView({
         const customOpen = custom && !custom.is_closed;
 
         const closedNormally = isClosedDay(d);
-
         const isClosed = customClosed || (!customOpen && closedNormally);
+
+        // ⭐ NEW: detect today's date
+        const isToday = d.toDateString() === new Date().toDateString();
 
         const classNames = [
           "mcell",
@@ -88,6 +90,7 @@ export default function MonthView({
           isClosed ? "closed" : "",
           customOpen ? "custom-open" : "",
           customClosed ? "custom-closed" : "",
+          isToday ? "today" : "",   // ⭐ highlight
         ].join(" ");
 
         const label =
