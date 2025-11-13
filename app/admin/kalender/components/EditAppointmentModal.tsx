@@ -152,6 +152,29 @@ export default function EditAppointmentModal({
     }, 1500);
   };
 
+  const handleCancelAppointment = async () => {
+  if (!confirm("Weet je zeker dat je deze afspraak wil annuleren?")) return;
+
+  const { error } = await supabase
+    .from("appointments")
+    .update({ status: "cancelled" })
+    .eq("id", appointment.id);
+
+  if (error) {
+    console.error("❌ Fout bij annuleren afspraak:", error);
+    alert("Fout bij annuleren van afspraak");
+    return;
+  }
+
+  setStep("success");
+  setTimeout(() => {
+    onUpdated?.();
+    onClose();
+    setStep("form");
+  }, 1200);
+};
+
+
   if (!open || !appointment) return null;
 
   return (
@@ -225,6 +248,12 @@ export default function EditAppointmentModal({
                   Volgende
                 </button>
               </div>
+              <button
+                type="button"
+                onClick={handleCancelAppointment}
+                style={deleteBtn}
+                >Afspraak Annuleren
+                </button>
             </form>
           </>
         )}
@@ -320,4 +349,14 @@ const confirmBtn: React.CSSProperties = {
   color: "#fff",
   cursor: "pointer",
   border: "none",
+};
+
+const deleteBtn: React.CSSProperties = {
+  padding: "8px 14px",
+  borderRadius: 10,
+  background: "#ffe5e5",
+  border: "1px solid #ffbaba",
+  color: "#c62828",
+  cursor: "pointer",
+  marginTop: 10,
 };
