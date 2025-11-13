@@ -155,7 +155,7 @@ export default function PlannenInner({ initialService }: { initialService: any }
       console.log("Appointment created successfully!");
 
       setTimeout(() => {
-        router.push("/");
+        router.push("/profile");
       }, 3000);
 
       setTimeout(() => {
