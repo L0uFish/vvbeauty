@@ -55,7 +55,14 @@ export default function Contact() {
 
             <div className="contact-item">
               <MapPin className="icon" />
-              <span>Goorkenshof 36, 2260 Westerlo</span>
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=Goorkenshof+36,+2260+Westerlo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="map-link"
+              >
+                Goorkenshof 36, 2260 Westerlo
+              </a>
             </div>
           </div>
 
