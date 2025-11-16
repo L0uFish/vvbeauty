@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import { Appointment, BlockedHour, CustomHour, GeneralHour } from "@/app/types/scheduling";
 import { getDateKey, getRecurringBlockedHours } from "@/app/utils/date";
 import EditAppointmentModal from "./EditAppointmentModal";
+import EditBlockHoursModal from "./EditBlockHoursModal";
 
 export default function DayView({
   date,
@@ -48,6 +49,9 @@ export default function DayView({
   const dayEnd = 1320; // 22:00
   const totalRange = dayEnd - dayStart;
   const timelineHeight = 960;
+
+  const [editBlockOpen, setEditBlockOpen] = useState(false);
+  const [selectedBlock, setSelectedBlock] = useState<any | null>(null);
 
   const recurringBlocks = useMemo(() => {
     return getRecurringBlockedHours(blocks, dayISO, date);
@@ -169,6 +173,11 @@ export default function DayView({
                 key={it.id}
                 className="bar"
                 onClick={() => {
+                  if (it.kind === "block") {
+                    const block = blocks.find(b => it.id.startsWith(b.id));
+                    setSelectedBlock(block || null);
+                    setEditBlockOpen(true);
+                  }
                   if (it.kind === "appt") handleAppointmentClick(it.appt);
                 }}
                 style={{
@@ -214,6 +223,17 @@ export default function DayView({
         customHours={customHours}
         blockedHours={blocks}
       />
+      {editBlockOpen && (
+      <EditBlockHoursModal
+        open={editBlockOpen}
+        onClose={() => {
+          setEditBlockOpen(false);
+          setSelectedBlock(null);
+        }}
+        block={selectedBlock}
+        onUpdated={onAppointmentUpdated} // refresh calendar
+      />
+    )}
     </>
   );
 }

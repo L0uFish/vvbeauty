@@ -1,16 +1,20 @@
 "use client";
 
 import { supabase } from "@/lib/supabaseClient";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 export default function CustomHoursModal({
   open,
   onClose,
   onSaved,
+  initialDate,
+  initialDates,
 }: {
   open: boolean;
   onClose: () => void;
   onSaved?: () => void;
+  initialDate?: string;
+  initialDates?: string[];
 }) {
   const [mode, setMode] = useState<"range" | "individual">("range");
   const [dates, setDates] = useState<string[]>([""]);
@@ -23,42 +27,110 @@ export default function CustomHoursModal({
   const [step, setStep] = useState<"form" | "confirm" | "success">("form");
   const [finalDates, setFinalDates] = useState<string[]>([]);
 
-  const handleAddDate = () => setDates([...dates, ""]);
+  const hasMultiDates = !!(initialDates && initialDates.length > 0);
+  const isLockedSelection = !!initialDate || hasMultiDates;
 
-  const handleDateChange = (i: number, value: string) => {
-    const updated = [...dates];
-    updated[i] = value;
-    setDates(updated);
+  /* ------------------------------------------------------------------ */
+  /*  PREFILL when opening from DayView or MonthView                    */
+  /* ------------------------------------------------------------------ */
+  useEffect(() => {
+    if (!open) return;
+
+    // Multi-day selection from MonthView
+    if (hasMultiDates) {
+      setMode("individual");
+      setDates(initialDates!);
+      return;
+    }
+
+    // Single-day edit from DayView / MonthView
+    if (initialDate) {
+      setMode("individual");
+      setDates([initialDate]);
+      return;
+    }
+
+    // Fresh open (top action) → default
+    setMode("range");
+    setDates([""]);
+  }, [open, initialDate, hasMultiDates, initialDates]);
+
+  /* ------------------------------------------------------------------ */
+  /*  STYLES                                                            */
+  /* ------------------------------------------------------------------ */
+
+  const input: React.CSSProperties = {
+    width: "100%",
+    padding: "8px",
+    borderRadius: 10,
+    border: "1px solid var(--vv-border)",
+    fontFamily: "var(--font-main)",
+    fontSize: "0.95rem",
   };
+
+  const button: React.CSSProperties = {
+    padding: "8px 16px",
+    borderRadius: 10,
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "0.2s",
+  };
+
+  const btnRow: React.CSSProperties = {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: "10px",
+    marginTop: "14px",
+  };
+
+  /* ------------------------------------------------------------------ */
+  /*  HELPERS                                                           */
+  /* ------------------------------------------------------------------ */
 
   const generateDateRange = (start: string, end: string) => {
     const startDate = new Date(start);
     const endDate = new Date(end);
     const results: string[] = [];
+
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
       results.push(new Date(d).toISOString().slice(0, 10));
     }
     return results;
   };
 
-  // 🧮 Calculate number of selected days dynamically
   const selectedCount = useMemo(() => {
+    // If coming from MonthView multi-selection → just count those
+    if (hasMultiDates) return initialDates!.length;
+
     if (mode === "range" && rangeFrom && rangeTo) {
       const start = new Date(rangeFrom);
       const end = new Date(rangeTo);
-      if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return 0;
-      return Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    } else if (mode === "individual") {
-      return dates.filter(Boolean).length;
+      if (start > end) return 0;
+
+      return (
+        Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
+        1
+      );
     }
+
+    if (mode === "individual") return dates.filter(Boolean).length;
+
     return 0;
-  }, [mode, rangeFrom, rangeTo, dates]);
+  }, [hasMultiDates, initialDates, mode, rangeFrom, rangeTo, dates]);
+
+  /* ------------------------------------------------------------------ */
+  /*  STEP 1: Build list of finalDates                                  */
+  /* ------------------------------------------------------------------ */
 
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
-    let parsed: string[] = [];
 
-    if (mode === "range") {
+    let parsed: string[];
+
+    // ✅ Multi-day selection from MonthView → use those dates as-is
+    if (hasMultiDates) {
+      parsed = [...(initialDates as string[])];
+    } else if (mode === "range") {
       if (!rangeFrom || !rangeTo) {
         alert("Selecteer een geldige periode.");
         return;
@@ -76,36 +148,63 @@ export default function CustomHoursModal({
     setStep("confirm");
   };
 
+  /* ------------------------------------------------------------------ */
+  /*  STEP 2: DELETE OLD ROWS + INSERT NEW                              */
+  /* ------------------------------------------------------------------ */
+
   const handleConfirm = async () => {
+    // 1) DELETE any old custom hours for these dates
+    const { error: deleteError } = await supabase
+      .from("custom_hours")
+      .delete()
+      .eq("type", "day")
+      .in("date", finalDates);
+
+    if (deleteError) {
+      console.error("❌ Delete error:", deleteError);
+      alert("Fout bij verwijderen oude aangepaste uren.");
+      return;
+    }
+
+    // 2) Insert new rows
     const inserts = finalDates.map((d) => {
-      const dateObj = new Date(d);
+      const dObj = new Date(d);
       return {
         type: "day",
         date: d,
         week_start: null,
-        month: dateObj.getMonth() + 1,
-        year: dateObj.getFullYear(),
+        month: dObj.getMonth() + 1,
+        year: dObj.getFullYear(),
         open_time: isClosed ? null : openTime + ":00",
         close_time: isClosed ? null : closeTime + ":00",
         is_closed: isClosed,
-        notes,
+        notes: notes || null,
       };
     });
 
-    const { error } = await supabase.from("custom_hours").insert(inserts);
+    const { error: insertError } = await supabase
+      .from("custom_hours")
+      .insert(inserts);
 
-    if (error) {
-      console.error("❌ Fout bij opslaan aangepaste uren:", error);
-      alert("Fout bij opslaan aangepaste uren");
-    } else {
-      setStep("success");
-      setTimeout(() => {
-        onSaved?.();
-        onClose();
-        resetForm();
-      }, 1500);
+    if (insertError) {
+      console.error("❌ Insert error:", insertError);
+      alert("Fout bij opslaan aangepaste uren.");
+      return;
     }
+
+    // 3) Success
+    setStep("success");
+
+    setTimeout(() => {
+      onSaved?.();
+      onClose();
+      resetForm();
+    }, 1500);
   };
+
+  /* ------------------------------------------------------------------ */
+  /*  RESET                                                             */
+  /* ------------------------------------------------------------------ */
 
   const resetForm = () => {
     setMode("range");
@@ -121,6 +220,10 @@ export default function CustomHoursModal({
   };
 
   if (!open) return null;
+
+  /* ------------------------------------------------------------------ */
+  /*  RENDER                                                            */
+  /* ------------------------------------------------------------------ */
 
   return (
     <div
@@ -148,6 +251,9 @@ export default function CustomHoursModal({
           fontFamily: "var(--font-main)",
         }}
       >
+        {/* ---------------------------------------------------------- */}
+        {/* FORM STEP                                                  */}
+        {/* ---------------------------------------------------------- */}
         {step === "form" && (
           <>
             <h3
@@ -161,31 +267,59 @@ export default function CustomHoursModal({
               Aangepaste Openingsuren
             </h3>
 
-            <form onSubmit={handleNext} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              <label style={{ fontWeight: 500 }}>Type selectie</label>
-              <div style={{ display: "flex", gap: "12px" }}>
-                <label style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <input
-                    type="radio"
-                    value="range"
-                    checked={mode === "range"}
-                    onChange={() => setMode("range")}
-                  />
-                  Periode
-                </label>
-                <label style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <input
-                    type="radio"
-                    value="individual"
-                    checked={mode === "individual"}
-                    onChange={() => setMode("individual")}
-                  />
-                  Individuele datums
-                </label>
-              </div>
+            <form
+              onSubmit={handleNext}
+              style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+            >
+              {/* TYPE SELECTIE — hidden if coming from initialDate/initialDates */}
+              {!isLockedSelection && (
+                <>
+                  <label style={{ fontWeight: 500 }}>Type selectie</label>
+                  <div style={{ display: "flex", gap: "12px" }}>
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        value="range"
+                        checked={mode === "range"}
+                        onChange={() => setMode("range")}
+                      />
+                      Periode
+                    </label>
 
-              {mode === "range" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        value="individual"
+                        checked={mode === "individual"}
+                        onChange={() => setMode("individual")}
+                      />
+                      Individuele datums
+                    </label>
+                  </div>
+                </>
+              )}
+
+              {/* RANGE MODE — only visible in free mode */}
+              {mode === "range" && !isLockedSelection && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                  }}
+                >
                   <div style={{ display: "flex", gap: "10px" }}>
                     <div style={{ flex: 1 }}>
                       <label>Van</label>
@@ -197,6 +331,7 @@ export default function CustomHoursModal({
                         style={input}
                       />
                     </div>
+
                     <div style={{ flex: 1 }}>
                       <label>Tot</label>
                       <input
@@ -210,47 +345,88 @@ export default function CustomHoursModal({
                   </div>
 
                   {selectedCount > 0 && (
-                    <p style={{ fontSize: "0.9rem", color: "var(--vv-primary)", marginTop: "2px" }}>
-                      🗓️ {selectedCount} {selectedCount === 1 ? "dag" : "dagen"} geselecteerd
+                    <p
+                      style={{
+                        fontSize: "0.9rem",
+                        color: "var(--vv-primary)",
+                        marginTop: "2px",
+                      }}
+                    >
+                      🗓️ {selectedCount}{" "}
+                      {selectedCount === 1 ? "dag" : "dagen"} geselecteerd
                     </p>
                   )}
                 </div>
               )}
 
+              {/* INDIVIDUAL MODE */}
               {mode === "individual" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  {dates.map((d, i) => (
-                    <input
-                      key={i}
-                      type="date"
-                      value={d}
-                      onChange={(e) => handleDateChange(i, e.target.value)}
-                      required={i === 0}
-                      style={input}
-                    />
-                  ))}
-                  <button
-                    type="button"
-                    onClick={handleAddDate}
-                    style={{
-                      ...button,
-                      background: "#fafafa",
-                      color: "var(--vv-primary)",
-                      border: "1px solid var(--vv-primary)",
-                      marginTop: "4px",
-                    }}
-                  >
-                    + Voeg nog een datum toe
-                  </button>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                  }}
+                >
+                  {isLockedSelection ? (
+                    // 🔒 Locked dates (from calendar)
+                    <>
+                      {dates.map((d, idx) => (
+                        <input
+                          key={idx}
+                          type="date"
+                          value={d}
+                          disabled
+                          style={{ ...input, opacity: 0.7 }}
+                        />
+                      ))}
+                      <p
+                        style={{
+                          fontSize: "0.8rem",
+                          color: "#777",
+                          marginTop: "4px",
+                        }}
+                      >
+                        Deze datums zijn geselecteerd in de kalender.
+                      </p>
+                    </>
+                  ) : (
+                    // Free manual entry
+                    <>
+                      {dates.map((d, idx) => (
+                        <input
+                          key={idx}
+                          type="date"
+                          value={d}
+                          onChange={(e) => {
+                            const next = [...dates];
+                            next[idx] = e.target.value;
+                            setDates(next);
+                          }}
+                          required={idx === 0}
+                          style={input}
+                        />
+                      ))}
 
-                  {selectedCount > 0 && (
-                    <p style={{ fontSize: "0.9rem", color: "var(--vv-primary)", marginTop: "2px" }}>
-                      🗓️ {selectedCount} {selectedCount === 1 ? "dag" : "dagen"} geselecteerd
-                    </p>
+                      <button
+                        type="button"
+                        onClick={() => setDates([...dates, ""])}
+                        style={{
+                          ...button,
+                          background: "#fafafa",
+                          color: "var(--vv-primary)",
+                          border: "1px solid var(--vv-primary)",
+                          marginTop: "4px",
+                        }}
+                      >
+                        + Voeg nog een datum toe
+                      </button>
+                    </>
                   )}
                 </div>
               )}
 
+              {/* HOURS */}
               <label style={{ fontWeight: 500 }}>Openingsuren</label>
               <div style={{ display: "flex", gap: "10px" }}>
                 <input
@@ -269,7 +445,13 @@ export default function CustomHoursModal({
                 />
               </div>
 
-              <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={isClosed}
@@ -291,15 +473,22 @@ export default function CustomHoursModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  style={{ ...button, background: "#fafafa", color: "#555", border: "1px solid #ddd" }}
+                  style={{
+                    ...button,
+                    background: "#fafafa",
+                    color: "#555",
+                    border: "1px solid #ddd",
+                  }}
                 >
                   Annuleren
                 </button>
+
                 <button
                   type="submit"
                   style={{
                     ...button,
-                    background: "linear-gradient(90deg, var(--vv-primary), var(--vv-accent))",
+                    background:
+                      "linear-gradient(90deg, var(--vv-primary), var(--vv-accent))",
                     color: "#fff",
                     border: "none",
                   }}
@@ -311,34 +500,56 @@ export default function CustomHoursModal({
           </>
         )}
 
+        {/* ---------------------------------------------------------- */}
+        {/* CONFIRM STEP                                               */}
+        {/* ---------------------------------------------------------- */}
         {step === "confirm" && (
           <div style={{ textAlign: "center" }}>
             <h3 style={{ color: "var(--vv-primary)", marginBottom: "14px" }}>
               Bevestig Aangepaste Uren
             </h3>
+
             <p>
               <strong>Datums:</strong>{" "}
-              {finalDates.map((d) => new Date(d).toLocaleDateString("nl-BE")).join(", ")}
+              {finalDates
+                .map((d) => new Date(d).toLocaleDateString("nl-BE"))
+                .join(", ")}
             </p>
+
             {isClosed ? (
-              <p><strong>Gesloten</strong></p>
+              <p>
+                <strong>Gesloten</strong>
+              </p>
             ) : (
-              <p><strong>Open:</strong> {openTime} – {closeTime}</p>
+              <p>
+                <strong>Open:</strong> {openTime} – {closeTime}
+              </p>
             )}
-            {notes && <p><strong>Notitie:</strong> {notes}</p>}
+
+            {notes && (
+              <p>
+                <strong>Notitie:</strong> {notes}</p>
+            )}
 
             <div style={btnRow}>
               <button
                 onClick={() => setStep("form")}
-                style={{ ...button, background: "#fafafa", color: "#555", border: "1px solid #ddd" }}
+                style={{
+                  ...button,
+                  background: "#fafafa",
+                  color: "#555",
+                  border: "1px solid #ddd",
+                }}
               >
                 Terug
               </button>
+
               <button
                 onClick={handleConfirm}
                 style={{
                   ...button,
-                  background: "linear-gradient(90deg, var(--vv-primary), var(--vv-accent))",
+                  background:
+                    "linear-gradient(90deg, var(--vv-primary), var(--vv-accent))",
                   color: "#fff",
                   border: "none",
                 }}
@@ -349,36 +560,17 @@ export default function CustomHoursModal({
           </div>
         )}
 
+        {/* ---------------------------------------------------------- */}
+        {/* SUCCESS STEP                                               */}
+        {/* ---------------------------------------------------------- */}
         {step === "success" && (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
-            <h3 style={{ color: "var(--vv-primary)" }}>💅 Uren opgeslagen!</h3>
+            <h3 style={{ color: "var(--vv-primary)" }}>
+              💅 Uren opgeslagen!
+            </h3>
           </div>
         )}
       </div>
     </div>
   );
 }
-
-const input: React.CSSProperties = {
-  width: "100%",
-  padding: "8px",
-  borderRadius: 10,
-  border: "1px solid var(--vv-border)",
-  fontFamily: "var(--font-main)",
-  fontSize: "0.95rem",
-};
-
-const button: React.CSSProperties = {
-  padding: "8px 16px",
-  borderRadius: 10,
-  fontWeight: 600,
-  cursor: "pointer",
-  transition: "0.2s",
-};
-
-const btnRow: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "flex-end",
-  gap: "10px",
-  marginTop: "14px",
-};

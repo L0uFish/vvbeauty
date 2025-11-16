@@ -11,7 +11,7 @@ type Props = {
   onPrev: () => void;
   onNext: () => void;
   children: React.ReactNode;
-  onOpenActionChooser: () => void; // open the modal with the 3 actions
+  onOpenActionChooser: () => void;
 };
 
 export default function AdminCalendarLayout({
@@ -27,17 +27,25 @@ export default function AdminCalendarLayout({
 }: Props) {
   return (
     <div className="k-wrap">
+      {/* === TOP TOOLBAR === */}
       <div className="k-toolbar">
         <div className="k-filters">
-          {(["day", "month", "year"] as View[]).map((v) => (
+          {(["day", "month", "year", "list"] as View[]).map((v) => (
             <button
               key={v}
               className={`tab ${view === v ? "on" : ""}`}
               onClick={() => onChangeView(v)}
             >
-              {v === "day" ? "Dag" : v === "month" ? "Maand" : "Jaar"}
+              {v === "day"
+                ? "Dag"
+                : v === "month"
+                ? "Maand"
+                : v === "year"
+                ? "Jaar"
+                : "Lijst"}
             </button>
           ))}
+
           <label className="k-check">
             <input
               type="checkbox"
@@ -48,7 +56,6 @@ export default function AdminCalendarLayout({
           </label>
         </div>
 
-        {/* Top-right actions */}
         <button
           aria-label="Nieuwe actie"
           onClick={onOpenActionChooser}
@@ -56,7 +63,8 @@ export default function AdminCalendarLayout({
             borderRadius: 10,
             padding: "8px 12px",
             border: "1px solid var(--vv-border)",
-            background: "linear-gradient(90deg, var(--vv-primary), var(--vv-accent))",
+            background:
+              "linear-gradient(90deg, var(--vv-primary), var(--vv-accent))",
             color: "#fff",
             fontWeight: 600,
           }}
@@ -65,12 +73,16 @@ export default function AdminCalendarLayout({
         </button>
       </div>
 
-      <div className="k-range">
-        <button onClick={onPrev}>◀</button>
-        <h3>{title}</h3>
-        <button onClick={onNext}>▶</button>
-      </div>
+      {/* === DATE NAVIGATION (HIDDEN IN LIST VIEW) === */}
+      {view !== "list" && (
+        <div className="k-range">
+          <button onClick={onPrev}>◀</button>
+          <h3>{title}</h3>
+          <button onClick={onNext}>▶</button>
+        </div>
+      )}
 
+      {/* === MAIN CONTENT === */}
       <div className="k-stage">{children}</div>
     </div>
   );

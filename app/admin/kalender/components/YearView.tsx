@@ -28,8 +28,9 @@ export default function YearView({
   showCancelled: boolean;
   isClosedDay: (d: Date) => boolean;
 
-  onSelectMonth?: (monthDate: Date) => void;
-  onSelectDay?: (dayDate: Date) => void;
+  // ⭐ NOW EXPECT STRING, NOT DATE
+  onSelectMonth?: (monthISO: string) => void;
+  onSelectDay?: (dayISO: string) => void;
 }) {
   const year = date.getFullYear();
   const months = Array.from({ length: 12 }, (_, i) => new Date(year, i, 1));
@@ -53,7 +54,7 @@ export default function YearView({
       {months.map((m, i) => {
         const mo = m.getMonth();
 
-        // Build 6x7 matrix starting Monday
+        // Build 6×7 grid starting Monday
         const first = new Date(year, mo, 1);
         const start = new Date(first);
         const offset = (first.getDay() + 6) % 7; // Monday = 0
@@ -67,10 +68,17 @@ export default function YearView({
 
         return (
           <section key={i} className="year-month heat">
-            {/* === Month header === */}
+            {/* -------- Month Header -------- */}
             <header
               style={{ cursor: "pointer" }}
-              onClick={() => onSelectMonth?.(m)}
+              onClick={() =>
+                onSelectMonth?.(
+                  `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(
+                    2,
+                    "0"
+                  )}-01`
+                )
+              }
             >
               {m.toLocaleString("nl-BE", { month: "long" })}
             </header>
@@ -86,7 +94,7 @@ export default function YearView({
                 const key = getDateKey(d);
                 const inMonth = d.getMonth() === mo;
 
-                // === Custom hours ===
+                // Custom hours
                 const custom = getCustomForDate(d);
                 const customClosed = custom?.is_closed === true;
                 const customOpen =
@@ -94,14 +102,16 @@ export default function YearView({
                   !custom.is_closed &&
                   (custom.open_time || custom.close_time);
 
-                // === Normal status ===
+                // Closed state
                 const closedNormally = isClosedDay(d);
                 const isClosed =
                   customClosed || (!customOpen && closedNormally);
 
-                // === Appointments & Blocks ===
+                // Appts + blocks
                 const dayAppts = appts.filter(
-                  (a) => a.date === key && (showCancelled || a.status !== "cancelled")
+                  (a) =>
+                    a.date === key &&
+                    (showCancelled || a.status !== "cancelled")
                 );
 
                 const dayBlocks = getRecurringBlockedHours(blocks, key, d);
@@ -118,7 +128,6 @@ export default function YearView({
                       0;
 
                     const start = toMinutes(a.time);
-
                     return {
                       start,
                       end: start + duration + buffer,
@@ -126,7 +135,6 @@ export default function YearView({
                         a.status === "cancelled" ? "#aaa" : "#66bb6a",
                     };
                   }),
-
                   ...dayBlocks.map((b) => ({
                     start: toMinutes(b.time_from),
                     end: toMinutes(b.time_until),
@@ -150,12 +158,17 @@ export default function YearView({
                       ? `Gesloten (${custom.notes})`
                       : "Gesloten"
                     : customOpen
-                    ? `Open ${custom.open_time?.slice(0, 5)}–${custom.close_time?.slice(0, 5)}`
+                    ? `Open ${custom.open_time?.slice(
+                        0,
+                        5
+                      )}–${custom.close_time?.slice(0, 5)}`
                     : isClosed
                     ? "Gesloten"
                     : bars.length
                     ? "Bezet"
                     : "Vrij";
+
+                const iso = getDateKey(d); // ⭐ generate ISO string
 
                 return (
                   <div
@@ -163,7 +176,7 @@ export default function YearView({
                     className={classNames}
                     title={tooltip}
                     style={{ cursor: "pointer" }}
-                    onClick={() => onSelectDay?.(d)}
+                    onClick={() => onSelectDay?.(iso)}
                   >
                     <span className="num">{d.getDate()}</span>
 
