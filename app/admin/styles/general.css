@@ -76,7 +76,7 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-top: 0;           /* no gap since we removed the title */
+  margin-top: 0;  
 }
 
 .admin-sidebar nav .navlink {
@@ -168,6 +168,7 @@ html, body {
     opacity: 0;
     pointer-events: none;
     margin-top: 0; /* reset offset on mobile */
+    padding-top: 16vh;
   }
 
   .admin-sidebar.open {

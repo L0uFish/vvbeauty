@@ -74,8 +74,8 @@ export default function MonthView({
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [showChoice, setShowChoice] = useState(false);
 
-  const LONG_PRESS_MS = 420;
-  const MOVE_THRESHOLD = 10;
+  const LONG_PRESS_MS = 450;
+  const MOVE_THRESHOLD = 5;
 
   const holdTimer = useRef<number | null>(null);
   const downPos = useRef({ x: 0, y: 0 });
@@ -159,9 +159,15 @@ export default function MonthView({
     };
 
   const handlePointerUp =
-    (d: Date) => (e: React.PointerEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
+  (d: Date) => (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+      // ⭐ FIX: if the user moved AT ALL → this was scrolling/dragging, no long-press allowed
+      if (dragHadMovement.current) {
+        clearHoldTimer();               // cancel long-press
+        longPressTriggered.current = false;
+      }
 
       const key = getDateKey(d);
 
@@ -173,7 +179,7 @@ export default function MonthView({
       dragStartKey.current = null;
       dragHadMovement.current = false;
       longPressTriggered.current = false;
-      clearHoldTimer();
+      clearHoldTimer(); // ensure it's dead no matter what
 
       // If long-press started selection, do nothing else on release
       if (wasLongPress) return;
