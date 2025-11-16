@@ -3,6 +3,8 @@
 import HeroCarousel from "../components/home/HeroCarousel";
 import Header from "../components/home/LoginBtn";
 import HomeButton from "../components/home/HomeButton";
+import LegalModal from "../components/legal/LegalModal";
+import { useState } from "react";
 import "../styles/contact.css";
 import {
   Mail,
@@ -15,10 +17,14 @@ import {
 } from "lucide-react";
 
 export default function Contact() {
+  const [showLegal, setShowLegal] = useState(false);
+
   return (
-    <main className="contact-container">
-      <Header />
-      <HomeButton />
+    <>
+      {showLegal && <LegalModal onClose={() => setShowLegal(false)} />}
+      <main className="contact-container">
+        <Header />
+        <HomeButton />
 
       {/* Hero */}
       <section className="hero-section">
@@ -34,11 +40,6 @@ export default function Contact() {
           {/* LEFT SIDE */}
           <div className="contact-left">
             <h2 className="contact-heading">VVBeauty</h2>
-
-            <div className="contact-item">
-              <Clock className="icon" />
-              <span>Maandag t.e.m. Zaterdag — <b>op afspraak</b></span>
-            </div>
 
             <div className="contact-item">
               <Phone className="icon" />
@@ -72,7 +73,7 @@ export default function Contact() {
               </a>
 
               <a
-                href="https://www.instagram.com/"
+                href="https://www.instagram.com/vv_beauty1/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="social-btn"
@@ -82,7 +83,7 @@ export default function Contact() {
               </a>
 
               <a
-                href="https://www.facebook.com/"
+                href="https://www.facebook.com/profile.php?id=61554889833124&locale=nl_BE"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="social-btn"
@@ -93,7 +94,13 @@ export default function Contact() {
             </div>
           </div>
         </div>
+        <button
+          className="legal-link"
+          onClick={() => setShowLegal(true)}
+          >Juridische informatie & privacy
+          </button>
       </section>
     </main>
+    </>
   );
 }

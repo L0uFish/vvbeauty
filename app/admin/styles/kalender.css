@@ -1,28 +1,28 @@
-/* =======================
-   VVBEAUTY ADMIN PANEL — KALENDER STYLES
-   ======================= */
+/* ======================= VVBEAUTY ADMIN PANEL — KALENDER STYLES ======================= */
+/*
+| NOTE: All CSS variables (var(--vv-...), var(--font-...), var(--radius))
+| have been replaced with hardcoded values.
+*/
 
 /* --- Stage Wrapper --- */
 .k-stage {
-  background: var(--vv-panel);
-  border: 1px solid var(--vv-border);
-  border-radius: var(--radius);
-  box-shadow: var(--vv-shadow);
+  background: #f7f7f7; /* Replaced var(--vv-panel) */
+  border: 1px solid #ddd; /* Replaced var(--vv-border) */
+  border-radius: 12px; /* Replaced var(--radius) */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Replaced var(--vv-shadow) */
   padding: 20px;
   min-height: 400px;
   animation: fadeIn 0.25s ease-in;
 }
 
 .muted {
-  color: var(--vv-muted);
+  color: #888; /* Replaced var(--vv-muted) */
   text-align: center;
   padding: 20px;
   font-style: italic;
 }
 
-/* =======================
-   DATE RANGE NAVIGATION
-   ======================= */
+/* ======================= DATE RANGE NAVIGATION ======================= */
 .k-range {
   display: flex;
   align-items: center;
@@ -33,14 +33,14 @@
 
 .k-range button {
   background: #fff;
-  border: 1px solid var(--vv-border);
+  border: 1px solid #ddd; /* Replaced var(--vv-border) */
   border-radius: 50%;
   width: 34px;
   height: 34px;
   cursor: pointer;
   font-size: 16px;
-  color: var(--vv-primary);
-  transition: var(--transition);
+  color: #a3386e; /* Replaced var(--vv-primary) */
+  transition: 0.2s ease; /* Replaced var(--transition) */
 }
 
 .k-range button:hover {
@@ -49,24 +49,22 @@
 }
 
 .k-range h3 {
-  font-family: var(--font-title);
-  color: var(--vv-primary);
+  font-family: 'Georgia', serif; /* Replaced var(--font-title) */
+  color: #a3386e; /* Replaced var(--vv-primary) */
   font-size: 20px;
   margin: 0;
   text-transform: capitalize;
 }
 
-/* =======================
-   DAY VIEW
-   ======================= */
+/* ======================= DAY VIEW ======================= */
 .day-grid {
   display: grid;
   grid-template-columns: 90px 1fr;
-  border-radius: var(--radius);
+  border-radius: 12px; /* Replaced var(--radius) */
   overflow: hidden;
   position: relative;
   background: #fff;
-  box-shadow: var(--vv-shadow);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Replaced var(--vv-shadow) */
   max-height: 900px;
 }
 
@@ -79,14 +77,14 @@
 .ticks {
   position: relative;
   background: #fffafc;
-  border-right: 1px dashed var(--vv-border);
+  border-right: 1px dashed #ddd; /* Replaced var(--vv-border) */
 }
 
 .tick .label {
   position: absolute;
   left: 12px;
   font-size: 13px;
-  color: var(--vv-muted);
+  color: #888; /* Replaced var(--vv-muted) */
 }
 
 .lanes {
@@ -106,7 +104,7 @@
   font-size: 13px;
   line-height: 1.3;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-  transition: var(--transition);
+  transition: 0.2s ease; /* Replaced var(--transition) */
 }
 
 .bar:hover {
@@ -121,16 +119,19 @@
 }
 
 .bar.appt {
-  background: linear-gradient(90deg, var(--vv-primary), var(--vv-accent));
+  /* Replaced linear-gradient(90deg, var(--vv-primary), var(--vv-accent)) */
+  background: linear-gradient(90deg, #a3386e, #e56a93);
 }
+
 .bar.cancelled {
   background: #b8a0a9;
 }
+
 .bar.block {
-  background: var(--vv-red);
+  background: #f44336; /* Replaced var(--vv-red) */
 }
 
-/* --- Responsive --- */
+/* --- Responsive Day View --- */
 @media (max-width: 600px) {
   .day-grid {
     grid-template-columns: 60px 1fr;
@@ -140,20 +141,18 @@
   }
 }
 
-/* =======================
-   MONTH VIEW
-   ======================= */
+/* ======================= MONTH VIEW ======================= */
 .month-grid.pretty {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 8px;
-  background: var(--vv-bg);
+  background: #faf8f9; /* Replaced var(--vv-bg) */
 }
 
 .dow {
   text-align: center;
   font-weight: 600;
-  color: var(--vv-muted);
+  color: #888; /* Replaced var(--vv-muted) */
   font-size: 14px;
   padding: 6px 0;
 }
@@ -161,17 +160,17 @@
 .mcell {
   position: relative;
   background: #fff;
-  border: 1px solid var(--vv-border);
+  border: 1px solid #ddd; /* Replaced var(--vv-border) */
   border-radius: 14px;
   min-height: 120px;
   padding: 8px;
   box-shadow: 0 2px 6px rgba(178, 53, 97, 0.05);
-  transition: var(--transition);
+  transition: 0.2s ease; /* Replaced var(--transition) */
   overflow: hidden;
 }
 
 .mcell:hover {
-  border-color: var(--vv-primary);
+  border-color: #a3386e; /* Replaced var(--vv-primary) */
   box-shadow: 0 4px 10px rgba(178, 53, 97, 0.1);
   transform: translateY(-1px);
 }
@@ -186,7 +185,7 @@
   top: 6px;
   right: 8px;
   font-size: 13px;
-  color: var(--vv-muted);
+  color: #888; /* Replaced var(--vv-muted) */
 }
 
 .mlines {
@@ -207,7 +206,7 @@
   color: #fff;
   font-size: 11px;
   cursor: pointer;
-  transition: var(--transition);
+  transition: 0.2s ease; /* Replaced var(--transition) */
   overflow: hidden;
 }
 
@@ -219,9 +218,11 @@
 .line.green {
   background: linear-gradient(90deg, #66bb6a, #57b885);
 }
+
 .line.red {
-  background: linear-gradient(90deg, var(--vv-red), #f1a7b6);
+  background: linear-gradient(90deg, #f44336, #f1a7b6); /* Replaced var(--vv-red) */
 }
+
 .line.grey {
   background: #bdbdbd;
 }
@@ -239,12 +240,12 @@
   left: 0;
   top: -34px;
   background: #fff;
-  color: var(--vv-text);
+  color: #333; /* Replaced var(--vv-text) */
   font-size: 12px;
   padding: 6px 8px;
   border-radius: 8px;
-  border: 1px solid var(--vv-border);
-  box-shadow: var(--vv-shadow);
+  border: 1px solid #ddd; /* Replaced var(--vv-border) */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Replaced var(--vv-shadow) */
   white-space: nowrap;
   z-index: 10;
 }
@@ -258,9 +259,36 @@
   opacity: 0.9;
 }
 
-/* =======================
-   YEAR VIEW (HEATMAP)
-   ======================= */
+/* ======================= MONTH VIEW MULTI-SELECT STYLES (FROM REACT COMPONENT) ======================= */
+
+.mcell.selected {
+  /* Strong border/box-shadow for selected state */
+  border: 2px solid #a3386e !important; /* Hardcoded Primary */
+  box-shadow: 0 0 0 2px #a3386e !important; /* Hardcoded Primary */
+  z-index: 20;
+}
+
+/* Today styles overwrite to use hardcoded primary color */
+.mcell.today {
+  border: 2px solid #a3386e; /* Replaced var(--vv-primary) */
+  box-shadow: 0 0 6px rgba(163, 56, 110, 0.6); /* Adjusted shadow with primary color */
+}
+
+.mcell.past {
+  opacity: 0.45; /* subtle dim */
+  filter: grayscale(0.25); /* tiny bit desaturated */
+}
+
+/*
+| NOTE: The multi-select toolbar buttons and the choice popup are heavily
+| styled using INLINE STYLES in the React component and cannot be
+| overwritten here without using !important (as seen in the previous answer).
+| It is recommended to move those button styles out of the component and use
+| consistent class names if possible for easier maintenance.
+*/
+
+
+/* ======================= YEAR VIEW (HEATMAP) ======================= */
 .year-grid.heatmap {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -292,7 +320,7 @@
 .year-month.heat header {
   text-transform: capitalize;
   font-weight: 700;
-  color: var(--vv-primary);
+  color: #a3386e; /* Replaced var(--vv-primary) */
   font-size: 16px;
   margin-bottom: 8px;
   text-align: center;
@@ -369,94 +397,93 @@
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.15);
 }
 
+/* Corrected hardcoded values for tiny-bar */
 .tiny-bar[style*="background: #66bb6a"] {
   background: #68c676 !important; /* green – confirmed/pending */
 }
-
 .tiny-bar[style*="background: #e57373"] {
   background: #e88a8a !important; /* red – blocked */
 }
-
 .tiny-bar[style*="background: #aaa"] {
   background: #bbb !important; /* grey – cancelled */
 }
 
-.mcell.today {
-  border: 2px solid var(--vv-primary);
-  box-shadow: 0 0 6px rgba(255, 116, 236, 0.6);
-}
 
-.mcell.past {
-  opacity: 0.45;              /* subtle dim */
-  filter: grayscale(0.25);     /* tiny bit desaturated */
-}
-
-/* =======================
-   MOBILE IMPROVEMENTS
-   ======================= */
+/* ======================= MOBILE IMPROVEMENTS (REWORKED) ======================= */
 @media (max-width: 600px) {
-  /* Make the full grid breathe */
+  
+  /* --- Grid Container --- */
   .month-grid.pretty {
+    /* Reduced gap between cells from 8px to 4px (already in old code, keeping it low) */
     gap: 4px;
-    padding: 4px;
+    padding: 2px; /* Slight padding reduction */
   }
 
-  /* Day name row */
+  /* --- Day Name Row (Ma, Di, Wo, etc.) --- */
   .dow {
-    font-size: 12px;
-    padding: 4px 0;
+    font-size: 11px; /* Slightly smaller font */
+    padding: 3px 0; /* Reduced vertical padding */
   }
 
-  /* Each day cell */
+  /* --- Each Day Cell (.mcell) --- */
   .mcell {
-    min-height: 90px;
-    padding: 6px;
-    border-radius: 10px;
+    min-height: 80px; /* Reduced minimum height */
+    padding: 4px; /* Reduced padding for tighter content */
+    border-radius: 8px; /* Slightly smaller border radius */
   }
 
+  /* --- Today/Past/Selected Styles (keep subtle) --- */
   .mcell.today {
     border-width: 2px;
-    box-shadow: 0 0 4px rgba(255, 116, 236, 0.5);
+    /* Box shadow is handled by hardcoded value, kept consistent */
   }
-
   .mcell.past {
     opacity: 0.35;
     filter: grayscale(0.25);
   }
 
-  /* Date number */
+  /* --- Date number (.mdate) --- */
   .mdate {
-    font-size: 12px;
-    top: 4px;
-    right: 6px;
+    font-size: 11px; /* Smaller date number */
+    top: 3px;
+    right: 5px;
   }
 
-  /* "Open" / "Gesloten" label */
+  /* --- Custom-hours label (.mcustom-note) --- */
   .mcustom-note {
     font-size: 9px !important;
+    line-height: 1.1;
     margin-bottom: 2px !important;
+    /* Ensure text is aligned left or centered if appropriate for the container */
+    text-align: left; 
+    padding-left: 2px; /* Give it a tiny bit of space from the left edge */
   }
 
-  /* Appointment blocks */
+  /* --- Appointment blocks (Lines) --- */
   .mlines {
-    gap: 3px;
-    margin-top: 18px;
+    /* Aligns the content below the custom note/date number */
+    gap: 2px; /* Tighter spacing between lines */
+    margin-top: 16px; /* Reduced top margin to utilize space better */
   }
 
   .line {
-    height: 18px;
-    font-size: 10px;
-    padding-left: 6px;
-    border-radius: 6px;
+    height: 16px; /* Slimmer line height */
+    font-size: 9px; /* Smaller font for line content */
+    padding-left: 4px; /* Reduced left padding */
+    border-radius: 4px; /* Smaller border radius */
   }
-
+  
   .line .mini-label {
-    font-size: 9px;
+    font-size: 9px; /* Ensures the mini label is also small */
   }
 
-  /* Tooltip */
-  .line[title]:hover::after {
-    font-size: 11px;
+  /* --- Multi-Select Checkmark (Inline Styled) --- */
+  /* If you want to adjust the checkmark size: */
+  .mcell.selected > div:nth-child(2) {
+    width: 16px !important;
+    height: 16px !important;
+    top: 3px !important;
+    right: 3px !important;
+    font-size: 10px !important;
   }
 }
-

@@ -1,0 +1,65 @@
+.legal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 9999;
+}
+
+.legal-modal {
+  background: #fff;
+  width: 90%;
+  max-width: 720px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 20px;
+  padding: 24px 32px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  position: relative;
+  font-family: Inter, sans-serif;
+  color: #333;
+}
+
+.legal-title {
+  font-family: "Playfair Display", serif;
+  font-size: 1.6rem;
+  margin-top: 32px;
+  margin-bottom: 12px;
+  color: #b23561;
+}
+
+.legal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(0,0,0,0.08);
+  border: none;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  font-size: 22px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.legal-close:hover {
+  background: rgba(0,0,0,0.15);
+}
+
+.legal-link {
+  margin-top: 12px;
+  background: none;
+  border: none;
+  color: #b23561;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.legal-link:hover {
+  opacity: 0.7;
+}

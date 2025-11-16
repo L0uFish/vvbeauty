@@ -47,7 +47,8 @@ export interface Appointment {
 }
 
 /** Admin calendar view mode */
-export type View = "day" | "month" | "year";
+export type View = "day" | "month" | "year" | "list";
 
 /** Available time slot (HH:MM) */
 export type AvailableTimeSlot = string;
+
