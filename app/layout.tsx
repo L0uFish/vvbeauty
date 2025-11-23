@@ -3,6 +3,8 @@ import { UserProvider } from "@/app/context/UserContext";
 import { AuthUIProvider } from "@/app/context/AuthUIContext";
 import HomeButton from "./components/home/HomeButton";
 import LoginBtn from "./components/home/LoginBtn";
+import DecemberPromo from "./components/specials/DecemberPromo";
+import SnowfallEffect from "./components/specials/SnowfallEffect";
 
 export const metadata = {
   metadataBase: new URL("https://vvbeauty.vercel.app"),
@@ -68,7 +70,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="nl">
       <body>
+        <DecemberPromo />
         <HomeButton />
+        <SnowfallEffect />
         <LoginBtn />
         <UserProvider>
           <AuthUIProvider>{children}</AuthUIProvider>
