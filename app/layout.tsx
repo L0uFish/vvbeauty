@@ -71,7 +71,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="nl">
       <body>
         <HomeButton />
-        <DecemberPromo />
         <SnowfallEffect />
         <LoginBtn />
         <UserProvider>
