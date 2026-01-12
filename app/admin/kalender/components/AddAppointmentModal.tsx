@@ -12,7 +12,8 @@ export default function AddAppointmentModal({
   generalHours,
   customHours,
   blockedHours,
-  initialDate,             // 👈 NEW
+  initialDate,
+  isAdmin = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -20,7 +21,8 @@ export default function AddAppointmentModal({
   generalHours: GeneralHour[];
   customHours: CustomHour[];
   blockedHours: BlockedHour[];
-  initialDate?: string;    // 👈 NEW
+  initialDate?: string;
+  isAdmin?: boolean;
 }) {
   const [clients, setClients] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
@@ -29,20 +31,20 @@ export default function AddAppointmentModal({
   const [selectedService, setSelectedService] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
+  // --- NEW STATE ---
+  const [isManual, setIsManual] = useState(false);
 
   const [times, setTimes] = useState<string[]>([]);
   const [loadingTimes, setLoadingTimes] = useState(false);
 
   const [step, setStep] = useState<"form" | "confirm" | "success">("form");
 
-  // ⭐ Prefill the date when modal opens
   useEffect(() => {
     if (open && initialDate) {
       setSelectedDate(initialDate);
     }
   }, [open, initialDate]);
 
-  // Load clients + services when modal opens
   useEffect(() => {
     if (!open) return;
 
@@ -62,7 +64,6 @@ export default function AddAppointmentModal({
     })();
   }, [open]);
 
-  // Load available times when date or service changes
   useEffect(() => {
     if (!selectedDate || !selectedService) {
       setTimes([]);
@@ -147,6 +148,7 @@ export default function AddAppointmentModal({
     setSelectedService(null);
     setSelectedDate("");
     setSelectedTime("");
+    setIsManual(false); // --- RESET TOGGLE ---
     setStep("form");
   };
 
@@ -155,14 +157,12 @@ export default function AddAppointmentModal({
   return (
     <div onClick={onClose} style={modalOverlay}>
       <div onClick={(e) => e.stopPropagation()} style={modal}>
-        {/* === FORM STEP === */}
         {step === "form" && (
           <>
             <h3 style={title}>Nieuwe Afspraak</h3>
 
             <form onSubmit={handleSubmit} style={form}>
               
-              {/* CLIENT */}
               <label style={label}>Klant</label>
               <select
                 value={selectedClient}
@@ -178,7 +178,6 @@ export default function AddAppointmentModal({
                 ))}
               </select>
 
-              {/* SERVICE */}
               <label style={label}>Behandeling</label>
               <select
                 value={selectedService?.id || ""}
@@ -198,7 +197,6 @@ export default function AddAppointmentModal({
                 ))}
               </select>
 
-              {/* DATE */}
               <label style={label}>Datum</label>
               <input
                 type="date"
@@ -208,23 +206,45 @@ export default function AddAppointmentModal({
                 style={input}
               />
 
-              {/* TIME */}
-              <label style={label}>Tijdslot</label>
-              <select
-                value={selectedTime}
-                onChange={(e) => setSelectedTime(e.target.value)}
-                required
-                style={dropdown}
-              >
-                <option value="">Kies tijd</option>
-                {loadingTimes && <option>Laden...</option>}
-                {!loadingTimes &&
-                  times.map((t: string) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-              </select>
+              {/* --- UPDATED TIME SECTION --- */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label style={label}>Tijdslot</label>
+                {isAdmin && (
+                  <label style={{ fontSize: '12px', cursor: 'pointer', color: 'var(--vv-primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={isManual} 
+                      onChange={(e) => setIsManual(e.target.checked)} 
+                    /> Handmatig
+                  </label>
+                )}
+              </div>
+
+              {isManual ? (
+                <input
+                  type="time"
+                  value={selectedTime}
+                  onChange={(e) => setSelectedTime(e.target.value)}
+                  required
+                  style={input}
+                />
+              ) : (
+                <select
+                  value={selectedTime}
+                  onChange={(e) => setSelectedTime(e.target.value)}
+                  required
+                  style={dropdown}
+                >
+                  <option value="">Kies tijd</option>
+                  {loadingTimes && <option>Laden...</option>}
+                  {!loadingTimes &&
+                    times.map((t: string) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                </select>
+              )}
 
               <div style={btnRow}>
                 <button
@@ -242,47 +262,20 @@ export default function AddAppointmentModal({
           </>
         )}
 
-        {/* === CONFIRM STEP === */}
         {step === "confirm" && (
           <div style={{ textAlign: "center" }}>
             <h3 style={title}>Bevestig Afspraak</h3>
-
-            <p>
-              <strong>Klant:</strong>{" "}
-              {clients.find((c) => c.id === selectedClient)?.full_name}
-            </p>
-
-            <p>
-              <strong>Behandeling:</strong> {selectedService?.name}
-            </p>
-
-            <p>
-              <strong>Datum:</strong> {selectedDate}
-            </p>
-
-            <p>
-              <strong>Tijd:</strong> {selectedTime}
-            </p>
-
+            <p><strong>Klant:</strong> {clients.find((c) => c.id === selectedClient)?.full_name}</p>
+            <p><strong>Behandeling:</strong> {selectedService?.name}</p>
+            <p><strong>Datum:</strong> {selectedDate}</p>
+            <p><strong>Tijd:</strong> {selectedTime}</p>
             <div style={btnRow}>
-              <button
-                onClick={() => setStep("form")}
-                style={cancelBtn}
-              >
-                Terug
-              </button>
-
-              <button
-                onClick={handleConfirm}
-                style={confirmBtn}
-              >
-                Bevestigen
-              </button>
+              <button onClick={() => setStep("form")} style={cancelBtn}>Terug</button>
+              <button onClick={handleConfirm} style={confirmBtn}>Bevestigen</button>
             </div>
           </div>
         )}
 
-        {/* === SUCCESS STEP === */}
         {step === "success" && (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
             <h3 style={title}>🌸 Afspraak toegevoegd!</h3>
@@ -293,67 +286,14 @@ export default function AddAppointmentModal({
   );
 }
 
-/* --- Styles --- */
-
-const modalOverlay: React.CSSProperties = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.35)",
-  display: "grid",
-  placeItems: "center",
-  zIndex: 60,
-};
-
-const modal: React.CSSProperties = {
-  width: "min(90vw,420px)",
-  background: "#fff",
-  borderRadius: 18,
-  padding: 22,
-  boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-};
-
-const form: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "12px",
-};
-
-const title: React.CSSProperties = {
-  textAlign: "center",
-  color: "var(--vv-primary)",
-};
-
-const label: React.CSSProperties = {
-  fontWeight: 600,
-};
-
-const input: React.CSSProperties = {
-  width: "100%",
-  padding: "8px",
-  borderRadius: 10,
-  border: "1px solid var(--vv-border)",
-};
-
+/* --- Styles remain the same --- */
+const modalOverlay: React.CSSProperties = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", display: "grid", placeItems: "center", zIndex: 60 };
+const modal: React.CSSProperties = { width: "min(90vw,420px)", background: "#fff", borderRadius: 18, padding: 22, boxShadow: "0 4px 20px rgba(0,0,0,0.15)" };
+const form: React.CSSProperties = { display: "flex", flexDirection: "column", gap: "12px" };
+const title: React.CSSProperties = { textAlign: "center", color: "var(--vv-primary)" };
+const label: React.CSSProperties = { fontWeight: 600 };
+const input: React.CSSProperties = { width: "100%", padding: "8px", borderRadius: 10, border: "1px solid var(--vv-border)" };
 const dropdown = { ...input, background: "#fff", cursor: "pointer" };
-
-const btnRow = {
-  display: "flex",
-  justifyContent: "flex-end",
-  gap: "10px",
-};
-
-const cancelBtn: React.CSSProperties = {
-  padding: "8px 16px",
-  borderRadius: 10,
-  background: "#fafafa",
-  border: "1px solid #ddd",
-  cursor: "pointer",
-};
-
-const confirmBtn: React.CSSProperties = {
-  padding: "8px 16px",
-  borderRadius: 10,
-  background: "var(--vv-primary)",
-  color: "#fff",
-  cursor: "pointer",
-};
+const btnRow = { display: "flex", justifyContent: "flex-end", gap: "10px" };
+const cancelBtn: React.CSSProperties = { padding: "8px 16px", borderRadius: 10, background: "#fafafa", border: "1px solid #ddd", cursor: "pointer" };
+const confirmBtn: React.CSSProperties = { padding: "8px 16px", borderRadius: 10, background: "var(--vv-primary)", color: "#fff", cursor: "pointer" };

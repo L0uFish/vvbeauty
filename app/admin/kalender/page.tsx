@@ -455,6 +455,7 @@ const [batchDates, setBatchDates] = useState<string[] | null>(null);
       {/* MODALS */}
       <AddAppointmentModal
         open={addOpen}
+        isAdmin={true}
         onClose={() => setAddOpen(false)}
         onAdded={() => {
           setAddOpen(false);
