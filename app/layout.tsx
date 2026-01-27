@@ -6,6 +6,7 @@ import LoginBtn from "./components/home/LoginBtn";
 import PromoBanner from "./components/specials/PromoBanner";
 import SnowfallEffect from "./components/specials/SnowfallEffect";
 import ValentineHeartsEffect from "./components/specials/ValentineHearts";
+import PageTransition from "./components/utils/PageTransition";
 
 export const metadata = {
   metadataBase: new URL("https://vvbeauty.vercel.app"),
@@ -76,7 +77,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PromoBanner />
         <LoginBtn />
         <UserProvider>
-          <AuthUIProvider>{children}</AuthUIProvider>
+          <AuthUIProvider>
+            {children}
+          </AuthUIProvider>
         </UserProvider>
       </body>
     </html>

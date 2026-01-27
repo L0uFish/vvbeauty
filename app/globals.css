@@ -1,8 +1,11 @@
 html, body {
   margin: 0;
   padding: 0;
+  background: #fff6f9;
 }
-
+body {
+  overflow-x: hidden;
+}
 /* Base Brownie styles */
 .brownie-epic-wrapper {
   position: fixed;

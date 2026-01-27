@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useUser } from "../context/UserContext";
+import { useRouter } from "next/navigation";  
 import "../styles/userDashboard.css";
 import ProfileEditModal from "../components/modals/ProfileEditModal";
 import Header from "../components/home/LoginBtn";
@@ -15,6 +16,7 @@ export default function Profiel() {
   const [loadingData, setLoadingData] = useState(true);
   const [showAllPast, setShowAllPast] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (!user) return;
@@ -78,8 +80,8 @@ export default function Profiel() {
   };
 
   const handleRebook = (serviceId: string) => {
-    window.location.href = `/plannen?service=${encodeURIComponent(serviceId)}`;
-  };
+  router.push(`/plannen?service=${encodeURIComponent(serviceId)}`);
+};
 
   if (loading || loadingData)
     return <main className="user-dashboard">Even geduld...</main>;
