@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import "@/app/styles/specials/DecemberPromo.css";
+import "@/app/styles/specials/PromoBanner.css";
 
-export default function DecemberPromo() {
+export default function PromoBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export default function DecemberPromo() {
           className="vvbeauty-banner"
         >
           <p className="banner-text">
-            ✨ <strong>€10 korting</strong> op alle behandelingen in december! 💅
+            💌 <strong>Spread the love!</strong> Nodig een vriendin uit & krijg allebei €10 korting! 💅
           </p>
 
           <div className="banner-actions">

@@ -1,0 +1,13 @@
+.vvbeauty-hearts-wrapper {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.vvbeauty-hearts-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 0 8px rgba(255, 90, 150, 0.15));
+}
