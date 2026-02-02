@@ -39,6 +39,7 @@ export default function AdminLayout({ children }: PropsWithChildren) {
           <NavLink href="/admin/kalender" label="📅 Kalender" />
           <NavLink href="/admin/klanten" label="👥 Klanten" />
           <NavLink href="/admin/diensten" label="🛠️ Diensten" />
+          <NavLink href="/admin/postgen" label="✨ Post Generator" />
         </nav>
         <hr />
       </aside>
