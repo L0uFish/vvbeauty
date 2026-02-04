@@ -143,6 +143,10 @@ export async function POST(req: Request) {
   const payload = (await req.json()) as Payload;
   console.log("[gcal-sync] payload:", payload?.table, payload?.op);
 
+  if (!payload?.record?.id) {
+  console.log("[gcal-sync] missing record.id, ignoring");
+  return NextResponse.json({ ok: true, ignored: true });
+}
 
   const supabaseUrl = process.env.SUPABASE_URL!;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
