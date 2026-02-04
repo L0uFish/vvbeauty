@@ -14,12 +14,15 @@ function b64ToJson(b64: string) {
   return JSON.parse(raw);
 }
 
+function isUuid(v: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+}
+
 async function getAccessTokenFromServiceAccount() {
   const saB64 = process.env.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64;
   if (!saB64) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_JSON_BASE64");
 
   const sa = b64ToJson(saB64);
-
   if (!sa?.client_email) throw new Error("Service account JSON missing client_email");
   if (!sa?.private_key) throw new Error("Service account JSON missing private_key");
 
@@ -66,12 +69,18 @@ async function getAccessTokenFromServiceAccount() {
 
   const json = await res.json();
   if (!res.ok) throw new Error(`Token error: ${JSON.stringify(json)}`);
-
   if (!json?.access_token) throw new Error("Token response missing access_token");
   return json.access_token as string;
 }
 
+function calendarForEntity(entityType: "appointment" | "block" | "hours") {
+  if (entityType === "appointment") return process.env.GCAL_APPOINTMENTS_CALENDAR_ID!;
+  if (entityType === "block") return process.env.GCAL_BLOCKS_CALENDAR_ID!;
+  return process.env.GCAL_HOURS_CALENDAR_ID!;
+}
+
 function isoFromDateAndTime(dateStr: string, timeStr: string) {
+  // date: YYYY-MM-DD, time: HH:MM
   return `${dateStr}T${timeStr}:00`;
 }
 
@@ -113,7 +122,7 @@ async function googleUpsertEvent(args: {
   try {
     json = text ? JSON.parse(text) : null;
   } catch {
-    // ignore parse errors; keep raw text
+    // ignore
   }
 
   if (!res.ok) {
@@ -136,50 +145,24 @@ async function googleDeleteEvent(accessToken: string, calendarId: string, eventI
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
-  // Google returns 204; 404 is okay (already gone)
+  // 204 OK, 404 fine too
   if (!res.ok && res.status !== 404) {
     const text = await res.text();
     throw new Error(`Google event delete failed: ${res.status} ${text}`);
   }
 }
 
-function calendarForEntity(entityType: "appointment" | "block" | "hours") {
-  if (entityType === "appointment") return process.env.GCAL_APPOINTMENTS_CALENDAR_ID!;
-  if (entityType === "block") return process.env.GCAL_BLOCKS_CALENDAR_ID!;
-  return process.env.GCAL_HOURS_CALENDAR_ID!;
-}
-
 export async function POST(req: Request) {
   try {
     // --- webhook auth ---
-    const secret =
-      req.headers.get("x-webhook-secret") ?? req.headers.get("X-Webhook-Secret");
-
-    if (!process.env.GOOGLE_SYNC_WEBHOOK_SECRET) {
-      throw new Error("Missing GOOGLE_SYNC_WEBHOOK_SECRET (server env)");
-    }
-
+    const secret = req.headers.get("x-webhook-secret") ?? req.headers.get("X-Webhook-Secret");
+    if (!process.env.GOOGLE_SYNC_WEBHOOK_SECRET) throw new Error("Missing GOOGLE_SYNC_WEBHOOK_SECRET");
     if (secret !== process.env.GOOGLE_SYNC_WEBHOOK_SECRET) {
-      console.warn("[gcal-sync] invalid webhook secret");
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
     const payload = (await req.json()) as Payload;
-    console.log("[gcal-sync] payload:", payload?.table, payload?.op);
 
-    // --- minimal payload guard ---
-    if (!payload?.table || !payload?.op) {
-      return NextResponse.json({ ok: true, ignored: true, reason: "missing table/op" });
-    }
-    if (!payload?.record?.id) {
-      return NextResponse.json({ ok: true, ignored: true, reason: "missing record.id" });
-    }
-    // if you ever use dummy testing ids:
-    if (payload.record.id === "00000000-0000-0000-0000-000000000000") {
-      return NextResponse.json({ ok: true, ignored: true, reason: "dummy id" });
-    }
-
-    // --- env sanity ---
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!supabaseUrl) throw new Error("Missing SUPABASE_URL");
@@ -187,9 +170,6 @@ export async function POST(req: Request) {
 
     const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
 
-    const accessToken = await getAccessTokenFromServiceAccount();
-
-    // Decide entity type from table
     const entityType =
       payload.table === "appointments"
         ? ("appointment" as const)
@@ -199,15 +179,17 @@ export async function POST(req: Request) {
         ? ("hours" as const)
         : null;
 
-    if (!entityType) {
-      console.log("[gcal-sync] ignored table:", payload.table);
-      return NextResponse.json({ ok: true, ignored: true, reason: "untracked table" });
+    if (!entityType) return NextResponse.json({ ok: true, ignored: true });
+
+    const entityId = String(payload.record?.id ?? "");
+    if (!entityId || !isUuid(entityId)) {
+      return NextResponse.json({ ok: true, skipped: true, reason: "missing_or_invalid_id" });
     }
 
-    const entityId = payload.record.id as string;
-    console.log("[gcal-sync] entityType/entityId:", entityType, entityId);
+    const calendarId = calendarForEntity(entityType);
+    if (!calendarId) throw new Error(`Missing calendar ID env for ${entityType}`);
 
-    // Look up existing mapping
+    // mapping lookup
     const { data: mapRow, error: mapErr } = await supabase
       .from("google_event_map")
       .select("*")
@@ -215,90 +197,75 @@ export async function POST(req: Request) {
       .eq("entity_id", entityId)
       .maybeSingle();
 
-    if (mapErr) {
-      throw new Error(`Supabase fetch google_event_map failed: ${JSON.stringify(mapErr)}`);
-    }
+    if (mapErr) throw new Error(`Supabase fetch google_event_map failed: ${JSON.stringify(mapErr)}`);
 
-    const calendarId = calendarForEntity(entityType);
-    if (!calendarId) throw new Error(`Missing calendar ID env for ${entityType}`);
+    const accessToken = await getAccessTokenFromServiceAccount();
 
-    // DELETE behaviour
+    // DELETE
     if (payload.op === "DELETE") {
       if (mapRow?.google_event_id) {
         await googleDeleteEvent(accessToken, mapRow.google_calendar_id, mapRow.google_event_id);
-        const { error: delErr } = await supabase
-          .from("google_event_map")
-          .delete()
-          .eq("entity_type", entityType)
-          .eq("entity_id", entityId);
-
-        if (delErr) {
-          throw new Error(`Supabase delete google_event_map failed: ${JSON.stringify(delErr)}`);
-        }
-
-        console.log("[gcal-sync] deleted event", entityType, entityId);
-      } else {
-        console.log("[gcal-sync] delete: no mapping (already gone)", entityType, entityId);
+        await supabase.from("google_event_map").delete().eq("entity_type", entityType).eq("entity_id", entityId);
       }
       return NextResponse.json({ ok: true });
     }
 
-    // INSERT / UPDATE behaviour
+    // --- Build event WITHOUT re-fetching appointments ---
     let summary = "VVBeauty";
     let startISO = "";
     let endISO = "";
 
     if (entityType === "appointment") {
-      const apptId = entityId;
+      const r = payload.record;
 
-      const { data, error } = await supabase
-        .from("appointments")
-        .select("id,date,time,status, services:service_id(name,duration_minutes), clients:user_id(full_name)")
-        .eq("id", apptId)
-        .maybeSingle();
+      const date = String(r.date ?? "");
+      const time = String(r.time ?? "");
+      const status = String(r.status ?? "confirmed");
 
-        if (error) throw new Error(`Supabase fetch appt failed: ${JSON.stringify(error)}`);
+      if (!date || !time) {
+        return NextResponse.json({ ok: true, skipped: true, reason: "missing_date_or_time" });
+      }
 
-        if (!data) {
-        // Row not found (yet). Don't break bookings; just skip.
-        console.warn("[gcal-sync] appointment not found, skipping", apptId);
-        return NextResponse.json({ ok: true, skipped: true, reason: "appointment_not_found" });
-        }
-
-
-      if (error) throw new Error(`Supabase fetch appt failed: ${JSON.stringify(error)}`);
-
-      // cancelled -> delete
-      if (data.status === "cancelled") {
+      // cancelled -> delete mapping+event
+      if (status === "cancelled") {
         if (mapRow?.google_event_id) {
           await googleDeleteEvent(accessToken, mapRow.google_calendar_id, mapRow.google_event_id);
-          const { error: delMapErr } = await supabase
-            .from("google_event_map")
-            .delete()
-            .eq("entity_type", entityType)
-            .eq("entity_id", entityId);
-
-          if (delMapErr) {
-            throw new Error(`Supabase delete google_event_map failed: ${JSON.stringify(delMapErr)}`);
-          }
-
-          console.log("[gcal-sync] cancelled -> deleted", entityId);
+          await supabase.from("google_event_map").delete().eq("entity_type", entityType).eq("entity_id", entityId);
         }
         return NextResponse.json({ ok: true, cancelled: true });
       }
 
-      const service = Array.isArray(data.services) ? data.services[0] : data.services;
-      const client = Array.isArray(data.clients) ? data.clients[0] : data.clients;
+      // Optional: fetch service/client names by ID (these rows exist already)
+      let serviceName = "Service";
+      let duration = 60;
 
-      const serviceName = service?.name ?? "Service";
-      const clientName = client?.full_name ?? "Client";
-      const duration = service?.duration_minutes ?? 60;
+      const serviceId = String(r.service_id ?? "");
+      if (serviceId && isUuid(serviceId)) {
+        const { data: svc } = await supabase
+          .from("services")
+          .select("name,duration_minutes")
+          .eq("id", serviceId)
+          .maybeSingle();
+        if (svc?.name) serviceName = svc.name;
+        if (svc?.duration_minutes) duration = svc.duration_minutes;
+      }
+
+      let clientName = "Client";
+      const userId = String(r.user_id ?? "");
+      if (userId && isUuid(userId)) {
+        const { data: cl } = await supabase
+          .from("clients")
+          .select("full_name")
+          .eq("id", userId)
+          .maybeSingle();
+        if (cl?.full_name) clientName = cl.full_name;
+      }
 
       summary = `${serviceName} – ${clientName}`;
 
-      startISO = isoFromDateAndTime(String(data.date), String(data.time));
+      startISO = isoFromDateAndTime(date, time);
 
-      const [h, m] = String(data.time).split(":").map(Number);
+      const [h, m] = time.split(":").map(Number);
       const startMinutes = h * 60 + m;
       const endMinutes = startMinutes + duration;
 
@@ -306,7 +273,7 @@ export async function POST(req: Request) {
       const endM = endMinutes % 60;
 
       const pad = (n: number) => String(n).padStart(2, "0");
-      endISO = `${String(data.date)}T${pad(endH)}:${pad(endM)}:00`;
+      endISO = `${date}T${pad(endH)}:${pad(endM)}:00`;
     }
 
     if (entityType === "block") {
@@ -318,12 +285,7 @@ export async function POST(req: Request) {
 
     if (entityType === "hours") {
       const h = payload.record;
-
-      // Only day overrides become events
-      if (h.type !== "day" || !h.date) {
-        console.log("[gcal-sync] hours ignored (not day override)", h.type);
-        return NextResponse.json({ ok: true, ignored: true, reason: "not day override" });
-      }
+      if (h.type !== "day" || !h.date) return NextResponse.json({ ok: true, ignored: true });
 
       if (h.is_closed) {
         summary = "CLOSED";
@@ -346,38 +308,37 @@ export async function POST(req: Request) {
     });
 
     if (mapRow?.google_event_id) {
-      const { error: updErr } = await supabase
+      await supabase
         .from("google_event_map")
         .update({ updated_at: new Date().toISOString() })
         .eq("entity_type", entityType)
         .eq("entity_id", entityId);
-
-      if (updErr) {
-        throw new Error(`Supabase update google_event_map failed: ${JSON.stringify(updErr)}`);
-      }
-
-      console.log("[gcal-sync] updated event", entityType, entityId, googleEventId);
     } else {
       const { error: insErr } = await supabase.from("google_event_map").insert({
         entity_type: entityType,
         entity_id: entityId,
         google_calendar_id: calendarId,
         google_event_id: googleEventId,
+        updated_at: new Date().toISOString(),
       });
 
+      // If insert fails (race/duplicate), update instead
       if (insErr) {
-        throw new Error(`Supabase insert google_event_map failed: ${JSON.stringify(insErr)}`);
+        await supabase
+          .from("google_event_map")
+          .update({
+            google_calendar_id: calendarId,
+            google_event_id: googleEventId,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("entity_type", entityType)
+          .eq("entity_id", entityId);
       }
-
-      console.log("[gcal-sync] created event", entityType, entityId, googleEventId);
     }
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {
     console.error("[gcal-sync] fatal:", err);
-    return NextResponse.json(
-      { ok: false, error: err?.message ?? String(err) },
-      { status: 500 }
-    );
+    return NextResponse.json({ ok: false, error: err?.message ?? String(err) }, { status: 500 });
   }
 }
