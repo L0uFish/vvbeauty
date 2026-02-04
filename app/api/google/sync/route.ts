@@ -205,6 +205,7 @@ export async function POST(req: Request) {
     }
 
     const entityId = payload.record.id as string;
+    console.log("[gcal-sync] entityType/entityId:", entityType, entityId);
 
     // Look up existing mapping
     const { data: mapRow, error: mapErr } = await supabase
@@ -254,7 +255,16 @@ export async function POST(req: Request) {
         .from("appointments")
         .select("id,date,time,status, services:service_id(name,duration_minutes), clients:user_id(full_name)")
         .eq("id", apptId)
-        .single();
+        .maybeSingle();
+
+        if (error) throw new Error(`Supabase fetch appt failed: ${JSON.stringify(error)}`);
+
+        if (!data) {
+        // Row not found (yet). Don't break bookings; just skip.
+        console.warn("[gcal-sync] appointment not found, skipping", apptId);
+        return NextResponse.json({ ok: true, skipped: true, reason: "appointment_not_found" });
+        }
+
 
       if (error) throw new Error(`Supabase fetch appt failed: ${JSON.stringify(error)}`);
 
