@@ -72,9 +72,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="nl">
       <body>
-        <ValentineHeartsEffect />
+        
         <HomeButton />
-        <PromoBanner />
+        
         <LoginBtn />
         <UserProvider>
           <AuthUIProvider>
