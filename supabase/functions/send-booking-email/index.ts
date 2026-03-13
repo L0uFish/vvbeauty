@@ -42,11 +42,14 @@ serve(async (req) => {
 
     const { data: service, error: svcErr } = await supabase
       .from("services")
-      .select("name")
+      .select("name, category")
       .eq("id", service_id)
       .single();
     if (svcErr || !service)
       throw new Error("Service not found: " + svcErr?.message);
+
+    const isHairRemovalCategory =
+      service.category?.toLowerCase().includes("onthar") ?? false;
 
     // 🗓 Format date as DD-MM-YYYY
     const formattedDate = new Date(date).toLocaleDateString("nl-BE", {
@@ -57,6 +60,43 @@ serve(async (req) => {
 
     // 3️⃣ Email content (VVBeauty style)
     const subjectClient = `Bevestiging van je afspraak – ${service.name} op ${formattedDate} om ${time}`;
+    const disclaimerHtml = isHairRemovalCategory
+      ? `
+            <div style="margin:22px 0 0;padding:16px 18px;background:#fff1f5;border:1px solid #f4c9d8;border-radius:10px;">
+              <p style="margin:0 0 12px;font-weight:700;color:#b23561;">Belangrijk ter voorbereiding van uw behandeling</p>
+              <p style="margin:0 0 12px;line-height:1.6;">
+                Om uw behandeling in de beste omstandigheden te kunnen uitvoeren, vragen wij u vriendelijk om de te behandelen zone op de dag van uw afspraak niet te scrubben en geen bodycrème, dagcrème of deodorant aan te brengen.
+              </p>
+              <p style="margin:0;line-height:1.6;">
+                Wanneer deze voorbereidingsrichtlijnen niet werden nageleefd, kan de behandeling die dag helaas niet doorgaan. In dat geval wordt een forfaitaire kost van 50% van de geplande behandeling in rekening gebracht.
+              </p>
+            </div>
+        `
+      : "";
+    const textClient = `Dag ${client.full_name},
+
+Bedankt voor je boeking! Je afspraak is bevestigd.
+
+Behandeling: ${service.name}
+Datum: ${formattedDate}
+Uur: ${time}
+
+Je kunt je afspraak beheren via onze website:
+https://vvbeauty.be/
+${
+  isHairRemovalCategory
+    ? `
+
+Belangrijk ter voorbereiding van uw behandeling
+Om uw behandeling in de beste omstandigheden te kunnen uitvoeren, vragen wij u vriendelijk om de te behandelen zone op de dag van uw afspraak niet te scrubben en geen bodycrème, dagcrème of deodorant aan te brengen.
+
+Wanneer deze voorbereidingsrichtlijnen niet werden nageleefd, kan de behandeling die dag helaas niet doorgaan. In dat geval wordt een forfaitaire kost van 50% van de geplande behandeling in rekening gebracht.`
+    : ""
+}
+
+Tot snel!
+Team VVBeauty
+https://vvbeauty.be`;
     const htmlClient = `
       <div style="font-family:Inter,Arial,sans-serif;padding:24px;color:#333;background:#fff6f9;">
         <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,0.08);overflow:hidden;border:1px solid #ffe0ea;">
@@ -80,6 +120,8 @@ serve(async (req) => {
                  Beheer je afspraak
               </a>
             </p>
+
+            ${disclaimerHtml}
 
             <p style="margin:14px 0 0;">Tot snel!<br><strong>Team VVBeauty</strong><br>
               <a href="https://vvbeauty.be" style="color:#b23561;text-decoration:none;">vvbeauty.be</a>
@@ -129,6 +171,7 @@ const send = async (payload: unknown) => {
       to: [{ email: client.email, name: client.full_name }],
       subject: subjectClient,
       html: htmlClient,
+      text: textClient,
     });
 
     // Admin email
