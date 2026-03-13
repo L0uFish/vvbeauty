@@ -2,6 +2,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import PlannenClient from "./PlannenClient";
+import { getCurrentUserRole } from "@/lib/getCurrentUserRole";
 
 export default async function Page(props: { searchParams: Promise<{ service?: string }> }) {
   const searchParams = await props.searchParams;
@@ -29,6 +30,7 @@ export default async function Page(props: { searchParams: Promise<{ service?: st
       },
     }
   );
+  const isAdmin = (await getCurrentUserRole(supabase)) === "admin";
 
   if (!serviceId) {
     return (
@@ -46,11 +48,11 @@ export default async function Page(props: { searchParams: Promise<{ service?: st
   // 1. Load service (no relations)
   const { data: service, error: serviceError } = await supabase
     .from("services")
-    .select("id, name, description, duration_minutes, buffer_minutes")
+    .select("id, name, description, duration_minutes, buffer_minutes, active")
     .eq("id", serviceId)
     .single();
 
-  if (serviceError || !service) {
+  if (serviceError || !service || (!service.active && !isAdmin)) {
     console.error("Service error:", serviceError);
     return (
       <main className="plannen-container">

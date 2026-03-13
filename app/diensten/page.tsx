@@ -3,20 +3,39 @@ import { getServerSupabase } from "@/lib/supabaseServer"; // ✅ server-side Sup
 import HeroCarousel from "../components/home/HeroCarousel";
 import Header from "../components/home/LoginBtn";
 import HomeButton from "../components/home/HomeButton";
-import { getServiceFromCache, setMultipleServices } from "@/app/services/serviceCahce";
+import { setMultipleServices } from "@/app/services/serviceCahce";
+import { getCurrentUserRole } from "@/lib/getCurrentUserRole";
 import "../styles/diensten.css";
+
+type ServiceListItem = {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  price: number | string;
+  promo_price: number | string | null;
+  active: boolean;
+  category_order: number | null;
+  display_order: number | null;
+};
 
 export default async function Boeking() {
   // ✅ create Supabase client for server context
   const supabase = await getServerSupabase();
+  const isAdmin = (await getCurrentUserRole(supabase)) === "admin";
 
-  // ✅ fetch all active services ordered by category_order + display_order
-  const { data: services, error } = await supabase
+  // ✅ admins can still see inactive services; other users only see active ones
+  let servicesQuery = supabase
     .from("services")
     .select("*")
-    .eq("active", true)
     .order("category_order", { ascending: true })
     .order("display_order", { ascending: true });
+
+  if (!isAdmin) {
+    servicesQuery = servicesQuery.eq("active", true);
+  }
+
+  const { data: services, error } = await servicesQuery;
 
   if (error || !services) {
     console.error("Supabase error:", error);
@@ -36,12 +55,15 @@ export default async function Boeking() {
   setMultipleServices(services);
 
   // ✅ group services by category
-  const grouped = services.reduce((acc: Record<string, any[]>, s) => {
-    const cat = s.category || "Overige";
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(s);
-    return acc;
-  }, {});
+  const grouped = (services as ServiceListItem[]).reduce(
+    (acc: Record<string, ServiceListItem[]>, s) => {
+      const cat = s.category || "Overige";
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(s);
+      return acc;
+    },
+    {}
+  );
 
   // ✅ get unique categories sorted by their lowest category_order value
   const sortedCategories = Object.keys(grouped).sort((a, b) => {
@@ -80,10 +102,15 @@ export default async function Boeking() {
                 <Link
                   key={s.id}
                   href={`/plannen?service=${s.id}`}
-                  className="service-box"
+                  className={`service-box ${s.active ? "" : "inactive"}`}
                 >
                   <div className="service-info">
-                    <div className="service-name">{s.name}</div>
+                    <div className="service-title-row">
+                      <div className="service-name">{s.name}</div>
+                      {!s.active && (
+                        <span className="service-status">Inactief</span>
+                      )}
+                    </div>
                     <div className="service-desc">{s.description}</div>
                   </div>
 

@@ -71,6 +71,12 @@ section h2 {
   animation: fadeInUp 0.6s ease forwards;
 }
 
+.service-box.inactive {
+  background: rgba(255, 255, 255, 0.78);
+  border-color: rgba(178, 53, 97, 0.16);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
 .service-box:nth-child(1) { animation-delay: 0.1s; }
 .service-box:nth-child(2) { animation-delay: 0.2s; }
 .service-box:nth-child(3) { animation-delay: 0.3s; }
@@ -84,8 +90,21 @@ section h2 {
   box-shadow: 0 6px 12px rgba(233, 30, 99, 0.1);
 }
 
+.service-box.inactive:hover {
+  background: rgba(255, 247, 250, 0.9);
+  border-color: rgba(178, 53, 97, 0.24);
+  box-shadow: 0 4px 10px rgba(178, 53, 97, 0.08);
+}
+
 .service-info {
   flex: 1;
+}
+
+.service-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.25rem;
 }
 
 .service-name {
@@ -93,13 +112,35 @@ section h2 {
   font-weight: 600;
   color: #b23561;
   font-size: 1.2rem;
-  margin-bottom: 0.25rem;
+}
+
+.service-status {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(102, 102, 102, 0.24);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  color: #6d6d6d;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 .service-desc {
   color: #555;
   font-size: 0.9rem;
   line-height: 1.4;
+}
+
+.service-box.inactive .service-name,
+.service-box.inactive .service-desc,
+.service-box.inactive .service-price {
+  color: #8b7280;
+}
+
+.service-box.inactive .service-price .old {
+  color: #b7a5ad;
 }
 
 .service-price {
