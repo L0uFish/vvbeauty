@@ -83,7 +83,7 @@ export default function PlannenInner({
         const month = String(now.getMonth() + 1).padStart(2, "0");
         const { data: customHours } = await supabase
           .from("custom_hours")
-          .select("date, open_time, close_time, is_closed")
+          .select("date, open_time, close_time, is_closed, notes")
           .gte("date", `${year}-${month}-01`)
           .lte("date", `${year}-${month}-31`);
 
@@ -138,10 +138,10 @@ export default function PlannenInner({
     }
 
     console.log("Phone verified, creating booking...");
-    await createBooking();
+    await createBooking(service);
   };
 
-  const createBooking = async () => {
+  const createBooking = async (currentService: BookingService) => {
     console.log("createBooking started");
     setSaving(true);
     setMessage(null);
@@ -151,7 +151,7 @@ export default function PlannenInner({
         .from("appointments")
         .insert([
           {
-            service_id: service.id,
+            service_id: currentService.id,
             user_id: user.id,
             date: selectedDate,
             time: selectedTime,

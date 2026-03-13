@@ -77,7 +77,7 @@ export default async function Page(props: { searchParams: Promise<{ service?: st
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const { data: customHours } = await supabase
     .from("custom_hours")
-    .select("date, open_time, close_time, is_closed")
+    .select("date, open_time, close_time, is_closed, notes")
     .gte("date", `${year}-${month}-01`)
     .lte("date", `${year}-${month}-31`);
 
