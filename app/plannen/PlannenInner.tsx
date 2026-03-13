@@ -167,6 +167,24 @@ export default function PlannenInner({
         return;
       }
 
+      const appointmentId = data?.[0]?.id;
+      if (appointmentId) {
+        try {
+          const { error: emailError } = await supabase.functions.invoke(
+            "send-booking-email",
+            {
+              body: { appointment_id: appointmentId },
+            }
+          );
+
+          if (emailError) {
+            console.error("Failed to send booking email:", emailError);
+          }
+        } catch (emailErr) {
+          console.error("Booking email invocation crashed:", emailErr);
+        }
+      }
+
       setShowSuccess(true);
       console.log("Appointment created successfully!");
 

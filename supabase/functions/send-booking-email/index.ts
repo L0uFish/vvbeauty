@@ -1,8 +1,22 @@
+/// <reference path="../edge-runtime.d.ts" />
 // supabase/functions/send-booking-email/index.ts
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-serve(async (req) => {
+type EmailRecipient = {
+  email: string;
+  name?: string;
+};
+
+type EmailPayload = {
+  from: EmailRecipient;
+  to: EmailRecipient[];
+  subject: string;
+  html?: string;
+  text?: string;
+};
+
+serve(async (req: Request) => {
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -140,7 +154,7 @@ Datum: ${formattedDate}
 Uur: ${time}`;
 
 // 4️⃣ Send via MailerSend
-const send = async (payload: unknown) => {
+const send = async (payload: EmailPayload) => {
       // 👇 CRITICAL FIX: Get the key and check if it exists
       const API_KEY = Deno.env.get("MAILERSEND_API_KEY");
       if (!API_KEY) {
@@ -162,7 +176,7 @@ const send = async (payload: unknown) => {
           throw new Error("MailerSend failed with status " + res.status + ": " + t);
       }
       // You might want to console.log the response to confirm success
-      console.log(`✅ MailerSend successful for ${payload.to[0].email}`); 
+      console.log(`✅ MailerSend successful for ${payload.to[0]?.email}`); 
   };
 
     // Client email
