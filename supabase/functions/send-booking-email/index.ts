@@ -1,8 +1,22 @@
+/// <reference path="../edge-runtime.d.ts" />
 // supabase/functions/send-booking-email/index.ts
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-serve(async (req) => {
+type EmailRecipient = {
+  email: string;
+  name?: string;
+};
+
+type EmailPayload = {
+  from: EmailRecipient;
+  to: EmailRecipient[];
+  subject: string;
+  html?: string;
+  text?: string;
+};
+
+serve(async (req: Request) => {
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -42,11 +56,14 @@ serve(async (req) => {
 
     const { data: service, error: svcErr } = await supabase
       .from("services")
-      .select("name")
+      .select("name, category")
       .eq("id", service_id)
       .single();
     if (svcErr || !service)
       throw new Error("Service not found: " + svcErr?.message);
+
+    const isHairRemovalCategory =
+      service.category?.toLowerCase().includes("onthar") ?? false;
 
     // 🗓 Format date as DD-MM-YYYY
     const formattedDate = new Date(date).toLocaleDateString("nl-BE", {
@@ -57,6 +74,43 @@ serve(async (req) => {
 
     // 3️⃣ Email content (VVBeauty style)
     const subjectClient = `Bevestiging van je afspraak – ${service.name} op ${formattedDate} om ${time}`;
+    const disclaimerHtml = isHairRemovalCategory
+      ? `
+            <div style="margin:22px 0 0;padding:16px 18px;background:#fff1f5;border:1px solid #f4c9d8;border-radius:10px;">
+              <p style="margin:0 0 12px;font-weight:700;color:#b23561;">Belangrijk ter voorbereiding van uw behandeling</p>
+              <p style="margin:0 0 12px;line-height:1.6;">
+                Om uw behandeling in de beste omstandigheden te kunnen uitvoeren, vragen wij u vriendelijk om de te behandelen zone op de dag van uw afspraak niet te scrubben en geen bodycrème, dagcrème of deodorant aan te brengen.
+              </p>
+              <p style="margin:0;line-height:1.6;">
+                Wanneer deze voorbereidingsrichtlijnen niet werden nageleefd, kan de behandeling die dag helaas niet doorgaan. In dat geval wordt een forfaitaire kost van 50% van de geplande behandeling in rekening gebracht.
+              </p>
+            </div>
+        `
+      : "";
+    const textClient = `Dag ${client.full_name},
+
+Bedankt voor je boeking! Je afspraak is bevestigd.
+
+Behandeling: ${service.name}
+Datum: ${formattedDate}
+Uur: ${time}
+
+Je kunt je afspraak beheren via onze website:
+https://vvbeauty.be/
+${
+  isHairRemovalCategory
+    ? `
+
+Belangrijk ter voorbereiding van uw behandeling
+Om uw behandeling in de beste omstandigheden te kunnen uitvoeren, vragen wij u vriendelijk om de te behandelen zone op de dag van uw afspraak niet te scrubben en geen bodycrème, dagcrème of deodorant aan te brengen.
+
+Wanneer deze voorbereidingsrichtlijnen niet werden nageleefd, kan de behandeling die dag helaas niet doorgaan. In dat geval wordt een forfaitaire kost van 50% van de geplande behandeling in rekening gebracht.`
+    : ""
+}
+
+Tot snel!
+Team VVBeauty
+https://vvbeauty.be`;
     const htmlClient = `
       <div style="font-family:Inter,Arial,sans-serif;padding:24px;color:#333;background:#fff6f9;">
         <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,0.08);overflow:hidden;border:1px solid #ffe0ea;">
@@ -81,6 +135,8 @@ serve(async (req) => {
               </a>
             </p>
 
+            ${disclaimerHtml}
+
             <p style="margin:14px 0 0;">Tot snel!<br><strong>Team VVBeauty</strong><br>
               <a href="https://vvbeauty.be" style="color:#b23561;text-decoration:none;">vvbeauty.be</a>
             </p>
@@ -98,7 +154,7 @@ Datum: ${formattedDate}
 Uur: ${time}`;
 
 // 4️⃣ Send via MailerSend
-const send = async (payload: unknown) => {
+const send = async (payload: EmailPayload) => {
       // 👇 CRITICAL FIX: Get the key and check if it exists
       const API_KEY = Deno.env.get("MAILERSEND_API_KEY");
       if (!API_KEY) {
@@ -120,7 +176,7 @@ const send = async (payload: unknown) => {
           throw new Error("MailerSend failed with status " + res.status + ": " + t);
       }
       // You might want to console.log the response to confirm success
-      console.log(`✅ MailerSend successful for ${payload.to[0].email}`); 
+      console.log(`✅ MailerSend successful for ${payload.to[0]?.email}`); 
   };
 
     // Client email
@@ -129,6 +185,7 @@ const send = async (payload: unknown) => {
       to: [{ email: client.email, name: client.full_name }],
       subject: subjectClient,
       html: htmlClient,
+      text: textClient,
     });
 
     // Admin email

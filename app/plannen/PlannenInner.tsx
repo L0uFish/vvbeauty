@@ -9,9 +9,25 @@ import Timeslots from "./Timeslots";
 import { useUser } from "@/app/context/UserContext";
 import { useAuthUI } from "@/app/context/AuthUIContext";
 import { useRequirePhone } from "@/app/hooks/useRequirePhone";
+import { CustomHour, GeneralHour } from "@/app/types/scheduling";
 import "../styles/plannen.css";
 
-export default function PlannenInner({ initialService }: { initialService: any }) {
+type BookingService = {
+  id: string;
+  name: string;
+  description: string | null;
+  duration_minutes: number;
+  buffer_minutes: number;
+  active: boolean;
+  generalHours: GeneralHour[];
+  customHours: CustomHour[];
+};
+
+export default function PlannenInner({
+  initialService,
+}: {
+  initialService: BookingService;
+}) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useUser();
@@ -19,7 +35,7 @@ export default function PlannenInner({ initialService }: { initialService: any }
   const { ensurePhone, MiniPhoneModal } = useRequirePhone();
 
   const [showSuccess, setShowSuccess] = useState(false);
-  const [service, setService] = useState<any>(initialService);
+  const [service, setService] = useState<BookingService | null>(initialService);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -47,7 +63,7 @@ export default function PlannenInner({ initialService }: { initialService: any }
         // 1. Load service (no relations)
         const { data: serviceData, error: serviceError } = await supabase
           .from("services")
-          .select("id, name, description, duration_minutes, buffer_minutes")
+          .select("id, name, description, duration_minutes, buffer_minutes, active")
           .eq("id", serviceId)
           .single();
 
@@ -67,7 +83,7 @@ export default function PlannenInner({ initialService }: { initialService: any }
         const month = String(now.getMonth() + 1).padStart(2, "0");
         const { data: customHours } = await supabase
           .from("custom_hours")
-          .select("date, open_time, close_time, is_closed")
+          .select("date, open_time, close_time, is_closed, notes")
           .gte("date", `${year}-${month}-01`)
           .lte("date", `${year}-${month}-31`);
 
@@ -122,10 +138,10 @@ export default function PlannenInner({ initialService }: { initialService: any }
     }
 
     console.log("Phone verified, creating booking...");
-    await createBooking();
+    await createBooking(service);
   };
 
-  const createBooking = async () => {
+  const createBooking = async (currentService: BookingService) => {
     console.log("createBooking started");
     setSaving(true);
     setMessage(null);
@@ -135,7 +151,7 @@ export default function PlannenInner({ initialService }: { initialService: any }
         .from("appointments")
         .insert([
           {
-            service_id: service.id,
+            service_id: currentService.id,
             user_id: user.id,
             date: selectedDate,
             time: selectedTime,
@@ -149,6 +165,24 @@ export default function PlannenInner({ initialService }: { initialService: any }
       if (error) {
         alert("Er is iets misgegaan bij het boeken. Probeer opnieuw.");
         return;
+      }
+
+      const appointmentId = data?.[0]?.id;
+      if (appointmentId) {
+        try {
+          const { error: emailError } = await supabase.functions.invoke(
+            "send-booking-email",
+            {
+              body: { appointment_id: appointmentId },
+            }
+          );
+
+          if (emailError) {
+            console.error("Failed to send booking email:", emailError);
+          }
+        } catch (emailErr) {
+          console.error("Booking email invocation crashed:", emailErr);
+        }
       }
 
       setShowSuccess(true);
@@ -182,9 +216,14 @@ export default function PlannenInner({ initialService }: { initialService: any }
 
   return (
     <main className="plannen-container">
-      <div className="plannen-card">
+      <div className={`plannen-card ${service.active ? "" : "inactive-service"}`}>
         <h1 className="plannen-title">{service.name}</h1>
         <p className="plannen-description">{service.description}</p>
+        {!service.active && (
+          <p className="plannen-inactive-note">
+            Deze dienst staat inactief, maar blijft zichtbaar voor admins.
+          </p>
+        )}
 
         <Calendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
         {selectedDate && (

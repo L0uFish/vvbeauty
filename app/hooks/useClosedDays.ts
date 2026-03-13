@@ -64,7 +64,7 @@ export function useClosedDays(year: number, month: number) {
 
         const { data: custom, error: cusErr } = await supabase
           .from("custom_hours")
-          .select("date, open_time, close_time, is_closed")
+          .select("date, open_time, close_time, is_closed, notes")
           .gte("date", start)
           .lte("date", end);
 
