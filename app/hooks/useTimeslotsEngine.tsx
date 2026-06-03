@@ -6,11 +6,15 @@ import { supabase } from "@/lib/supabaseClient";
 import { getTimeslotsForDate } from "@/app/services/timeslotsEngine";
 import { GeneralHour, CustomHour } from "@/app/types/scheduling";
 
-// Supabase returns "services" as an ARRAY (even with a single relation)
+// Supabase may return `services` either as an ARRAY (relation) or a single OBJECT.
+// Support both shapes here when normalizing appointment durations.
 type AppointmentRow = {
   time: string;
   status: string;
-  services: { duration_minutes: number; buffer_minutes: number } | null;
+  services:
+    | { duration_minutes: number; buffer_minutes: number }
+    | { duration_minutes: number; buffer_minutes: number }[]
+    | null;
 };
 
 export function useTimeslotsEngine(
@@ -63,12 +67,14 @@ export function useTimeslotsEngine(
       const rows = (rawAppts ?? []) as AppointmentRow[];
 
       const appointments = rows.map((a) => {
+        const serviceEntry = Array.isArray(a.services) ? a.services[0] : a.services;
+
         return {
           time: a.time,
           duration_minutes:
-            a.services?.duration_minutes ?? service.duration_minutes,
+            serviceEntry?.duration_minutes ?? service.duration_minutes,
           buffer_minutes:
-            a.services?.buffer_minutes ?? service.buffer_minutes,
+            serviceEntry?.buffer_minutes ?? service.buffer_minutes,
         };
       });
 
