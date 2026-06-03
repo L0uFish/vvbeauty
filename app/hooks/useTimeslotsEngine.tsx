@@ -10,10 +10,7 @@ import { GeneralHour, CustomHour } from "@/app/types/scheduling";
 type AppointmentRow = {
   time: string;
   status: string;
-  services: {
-    duration_minutes: number;
-    buffer_minutes: number;
-  }[] | null;
+  services: { duration_minutes: number; buffer_minutes: number } | null;
 };
 
 export function useTimeslotsEngine(
@@ -66,14 +63,12 @@ export function useTimeslotsEngine(
       const rows = (rawAppts ?? []) as AppointmentRow[];
 
       const appointments = rows.map((a) => {
-        const serviceEntry = a.services?.[0]; // take first related service
-
         return {
           time: a.time,
           duration_minutes:
-            serviceEntry?.duration_minutes ?? service.duration_minutes,
+            a.services?.duration_minutes ?? service.duration_minutes,
           buffer_minutes:
-            serviceEntry?.buffer_minutes ?? service.buffer_minutes,
+            a.services?.buffer_minutes ?? service.buffer_minutes,
         };
       });
 
