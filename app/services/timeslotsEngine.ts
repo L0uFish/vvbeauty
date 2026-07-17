@@ -106,9 +106,15 @@ export function getTimeslotsForDate(params: {
   }
 
   // Loop through every 30-minute start time
-  // Allow booking exactly at closing time
+  // Only allow booking if the entire combined block fits before closing
   for (let start = openMin; start <= closeMin; start += 30) {
     const end = start + total;
+
+    // Check if the entire block fits within operating hours
+    if (end > closeMin) {
+      break;
+    }
+
     let conflict = false;
 
     // Check blocked hours overlap

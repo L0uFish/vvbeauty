@@ -154,14 +154,14 @@ export default function PlannenInner({
     const mins = minutes % 60;
 
     if (hours > 0 && mins > 0) {
-      return `${hours} uur${hours === 1 ? "" : "en"} en ${mins} minuut${mins === 1 ? "" : "en"}`;
+      return `${hours} uu${hours === 1 ? "r" : "ren"} en ${mins} minut${mins === 1 ? "" : "en"}`;
     }
 
     if (hours > 0) {
-      return `${hours} uur${hours === 1 ? "" : "en"}`;
+      return `${hours} uu${hours === 1 ? "r" : "ren"}`;
     }
 
-    return `${mins} minuut${mins === 1 ? "" : "en"}`;
+    return `${mins} minut${mins === 1 ? "" : "en"}`;
   };
 
   const addableServices = availableServices.filter(
