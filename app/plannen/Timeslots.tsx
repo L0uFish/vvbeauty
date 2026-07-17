@@ -1,31 +1,27 @@
 "use client";
 
 import React from "react";
-import { useTimeslotsEngine } from "@/app/hooks/useTimeslotsEngine";
+import { useTimeslotsEngine, type BookingServiceSelection } from "@/app/hooks/useTimeslotsEngine";
 
 interface TimeslotsProps {
   selectedDate: string | null;
   selectedTime: string | null;
   onSelectTime: (time: string) => void;
-  service: any;
+  services: BookingServiceSelection[];
 }
 
 export default function Timeslots({
   selectedDate,
   selectedTime,
   onSelectTime,
-  service,
+  services,
 }: TimeslotsProps) {
-  const { times, loading } = useTimeslotsEngine(selectedDate, service);
+  const { times, loading } = useTimeslotsEngine(selectedDate, services);
 
   if (loading) return <p>Beschikbare tijden laden...</p>;
 
   if (times.length === 0) {
-    return (
-      <p>
-        Geen beschikbare uren voor deze dag.
-      </p>
-    );
+    return <p>Geen beschikbare uren voor deze dag.</p>;
   }
 
   return (

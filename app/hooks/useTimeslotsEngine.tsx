@@ -17,24 +17,31 @@ type AppointmentRow = {
     | null;
 };
 
+export type BookingServiceSelection = {
+  id: string;
+  duration_minutes: number;
+  buffer_minutes: number;
+  generalHours?: GeneralHour[];
+  customHours?: CustomHour[];
+};
+
 export function useTimeslotsEngine(
   date: string | null,
-  service: {
-    id: string;
-    duration_minutes: number;
-    buffer_minutes: number;
-    generalHours: GeneralHour[];
-    customHours: CustomHour[];
-  }
+  service: BookingServiceSelection | BookingServiceSelection[] | null
 ) {
   const [times, setTimes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!date || !service) {
+    if (!date || !service || (Array.isArray(service) && service.length === 0)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimes([]);
+      setLoading(false);
       return;
     }
+
+    const selectedServices = Array.isArray(service) ? service : [service];
+    const primaryService = selectedServices[0];
 
     (async () => {
       setLoading(true);
@@ -72,9 +79,9 @@ export function useTimeslotsEngine(
         return {
           time: a.time,
           duration_minutes:
-            serviceEntry?.duration_minutes ?? service.duration_minutes,
+            serviceEntry?.duration_minutes ?? primaryService?.duration_minutes ?? 0,
           buffer_minutes:
-            serviceEntry?.buffer_minutes ?? service.buffer_minutes,
+            serviceEntry?.buffer_minutes ?? primaryService?.buffer_minutes ?? 0,
         };
       });
 
@@ -95,9 +102,9 @@ export function useTimeslotsEngine(
       // ======================================================
       const timeslots = getTimeslotsForDate({
         date,
-        service,
-        generalHours: service.generalHours,
-        customHours: service.customHours,
+        service: selectedServices,
+        generalHours: primaryService?.generalHours ?? [],
+        customHours: primaryService?.customHours ?? [],
         blockedHours: blocks ?? [],
         appointments,
       });

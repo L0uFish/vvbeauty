@@ -2,7 +2,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Calendar from "./Calendar";
 import Timeslots from "./Timeslots";
@@ -23,6 +23,15 @@ type BookingService = {
   customHours: CustomHour[];
 };
 
+type ServiceRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  duration_minutes: number;
+  buffer_minutes: number;
+  active: boolean;
+};
+
 export default function PlannenInner({
   initialService,
 }: {
@@ -36,6 +45,11 @@ export default function PlannenInner({
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [service, setService] = useState<BookingService | null>(initialService);
+  const [selectedServices, setSelectedServices] = useState<BookingService[]>(
+    initialService ? [initialService] : []
+  );
+  const [availableServices, setAvailableServices] = useState<BookingService[]>([]);
+  const [showAddService, setShowAddService] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -44,7 +58,6 @@ export default function PlannenInner({
 
   const serviceId = searchParams?.get("service");
 
-  // Pre-fill from URL
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -54,13 +67,18 @@ export default function PlannenInner({
     if (preTime) setSelectedTime(preTime);
   }, []);
 
-  // Re-fetch service + hours if serviceId changes
+  useEffect(() => {
+    if (!initialService) return;
+    setService(initialService);
+    setSelectedServices([initialService]);
+    setSelectedTime(null);
+  }, [initialService]);
+
   useEffect(() => {
     if (!serviceId || serviceId === initialService?.id) return;
 
     (async () => {
       try {
-        // 1. Load service (no relations)
         const { data: serviceData, error: serviceError } = await supabase
           .from("services")
           .select("id, name, description, duration_minutes, buffer_minutes, active")
@@ -72,12 +90,8 @@ export default function PlannenInner({
           return;
         }
 
-        // 2. Load ALL general_hours (global)
-        const { data: generalHours } = await supabase
-          .from("general_hours")
-          .select("*");
+        const { data: generalHours } = await supabase.from("general_hours").select("*");
 
-        // 3. Load custom_hours for current month
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -87,25 +101,90 @@ export default function PlannenInner({
           .gte("date", `${year}-${month}-01`)
           .lte("date", `${year}-${month}-31`);
 
-        // 4. Combine
         const serviceWithHours = {
           ...serviceData,
           generalHours: generalHours || [],
           customHours: customHours || [],
-        };
+        } as BookingService;
 
         setService(serviceWithHours);
+        setSelectedServices([serviceWithHours]);
+        setSelectedDate(null);
+        setSelectedTime(null);
       } catch (err) {
         console.error("Failed to load service with hours:", err);
       }
     })();
   }, [serviceId, initialService]);
 
-  // Handle booking
-  const handleBooking = async () => {
-    console.log("handleBooking clicked", { user, selectedDate, selectedTime, service });
+  useEffect(() => {
+    if (!initialService) return;
 
-    if (!selectedDate || !selectedTime || !service) {
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("services")
+          .select("id, name, description, duration_minutes, buffer_minutes, active")
+          .order("name", { ascending: true });
+
+        if (error) throw error;
+
+        const servicesWithHours = (data as ServiceRow[] | null ?? [])
+          .filter((item) => item.active || item.id === initialService.id)
+          .map((item) => ({
+            ...item,
+            generalHours: initialService.generalHours || [],
+            customHours: initialService.customHours || [],
+          }));
+
+        setAvailableServices(servicesWithHours);
+      } catch (err) {
+        console.error("Failed to load available services:", err);
+      }
+    })();
+  }, [initialService]);
+
+  const totalBookingMinutes = selectedServices.reduce(
+    (sum, serviceEntry) => sum + serviceEntry.duration_minutes + serviceEntry.buffer_minutes,
+    0
+  );
+
+  const addableServices = availableServices.filter(
+    (serviceOption) => !selectedServices.some((selected) => selected.id === serviceOption.id)
+  );
+
+  const handleAddServices = (event: ChangeEvent<HTMLSelectElement>) => {
+    const selectedIds = Array.from(event.target.selectedOptions).map((option) => option.value);
+    if (!selectedIds.length) return;
+
+    const servicesToAdd = availableServices.filter((serviceOption) =>
+      selectedIds.includes(serviceOption.id)
+    );
+
+    setSelectedServices((currentServices) => {
+      const currentIds = new Set(currentServices.map((serviceEntry) => serviceEntry.id));
+      const merged = [...currentServices];
+
+      servicesToAdd.forEach((serviceOption) => {
+        if (!currentIds.has(serviceOption.id)) {
+          merged.push(serviceOption);
+          currentIds.add(serviceOption.id);
+        }
+      });
+
+      return merged;
+    });
+
+    setSelectedTime(null);
+    setShowAddService(false);
+
+    Array.from(event.target.options).forEach((option) => {
+      option.selected = false;
+    });
+  };
+
+  const handleBooking = async () => {
+    if (!selectedDate || !selectedTime || selectedServices.length === 0 || !service) {
       console.warn("Missing date/time/service");
       return;
     }
@@ -117,65 +196,57 @@ export default function PlannenInner({
       localStorage.setItem(
         "pendingBooking",
         JSON.stringify({
-          serviceId: service.id,
+          serviceId: selectedServices[0].id,
           selectedDate,
           selectedTime,
         })
       );
-      console.warn("No user, opening login...");
       openLogin();
       setIsBookingInProgress(false);
       return;
     }
 
-    console.log("Ensuring phone...");
     const hasPhone = await ensurePhone();
-    console.log("ensurePhone() result:", hasPhone);
     if (!hasPhone) {
-      console.warn("No phone → aborting booking");
       setIsBookingInProgress(false);
       return;
     }
 
-    console.log("Phone verified, creating booking...");
-    await createBooking(service);
+    await createBooking();
   };
 
-  const createBooking = async (currentService: BookingService) => {
-    console.log("createBooking started");
+  const createBooking = async () => {
     setSaving(true);
     setMessage(null);
 
     try {
+      const appointmentsToInsert = selectedServices.map((serviceEntry) => ({
+        service_id: serviceEntry.id,
+        user_id: user.id,
+        date: selectedDate,
+        time: selectedTime,
+        status: "pending",
+      }));
+
       const { data, error } = await supabase
         .from("appointments")
-        .insert([
-          {
-            service_id: currentService.id,
-            user_id: user.id,
-            date: selectedDate,
-            time: selectedTime,
-            status: "pending",
-          },
-        ])
+        .insert(appointmentsToInsert)
         .select();
-
-      console.log("Supabase insert result:", { data, error });
 
       if (error) {
         alert("Er is iets misgegaan bij het boeken. Probeer opnieuw.");
         return;
       }
 
-      const appointmentId = data?.[0]?.id;
-      if (appointmentId) {
+      const appointmentIds = (data ?? [])
+        .map((appointment: { id?: string }) => appointment.id)
+        .filter((id): id is string => Boolean(id));
+
+      for (const appointmentId of appointmentIds) {
         try {
-          const { error: emailError } = await supabase.functions.invoke(
-            "send-booking-email",
-            {
-              body: { appointment_id: appointmentId },
-            }
-          );
+          const { error: emailError } = await supabase.functions.invoke("send-booking-email", {
+            body: { appointment_id: appointmentId },
+          });
 
           if (emailError) {
             console.error("Failed to send booking email:", emailError);
@@ -186,8 +257,6 @@ export default function PlannenInner({
       }
 
       setShowSuccess(true);
-      console.log("Appointment created successfully!");
-
       setTimeout(() => {
         router.push("/profile");
       }, 3000);
@@ -225,19 +294,66 @@ export default function PlannenInner({
           </p>
         )}
 
+        <div className="service-selection-section">
+          <div className="service-selection-pills">
+            {selectedServices.map((serviceEntry) => (
+              <span key={serviceEntry.id} className="service-pill">
+                {serviceEntry.name}
+              </span>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            className="plannen-button secondary"
+            onClick={() => setShowAddService((current) => !current)}
+          >
+            Dienst toevoegen
+          </button>
+
+          {showAddService && (
+            <div className="service-selector">
+              {addableServices.length > 0 ? (
+                <>
+                  <label className="service-selector-label" htmlFor="extra-services-select">
+                    Kies één of meerdere extra diensten
+                  </label>
+                  <select
+                    id="extra-services-select"
+                    className="service-selector-select"
+                    multiple
+                    size={6}
+                    onChange={handleAddServices}
+                  >
+                    {addableServices.map((serviceOption) => (
+                      <option key={serviceOption.id} value={serviceOption.id}>
+                        {serviceOption.name} ({serviceOption.duration_minutes} min)
+                      </option>
+                    ))}
+                  </select>
+                </>
+              ) : (
+                <p className="service-selector-help">Er zijn geen extra diensten meer beschikbaar.</p>
+              )}
+            </div>
+          )}
+
+          <p className="plannen-duration">Totale geplande tijd: {totalBookingMinutes} minuten</p>
+        </div>
+
         <Calendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
         {selectedDate && (
           <Timeslots
             selectedDate={selectedDate}
             selectedTime={selectedTime}
             onSelectTime={setSelectedTime}
-            service={service}
+            services={selectedServices}
           />
         )}
 
         <button
           type="button"
-          disabled={!selectedDate || !selectedTime || saving || isBookingInProgress}
+          disabled={!selectedDate || !selectedTime || saving || isBookingInProgress || selectedServices.length === 0}
           className={`plannen-button ${selectedDate && selectedTime ? "active" : ""}`}
           onClick={handleBooking}
         >
