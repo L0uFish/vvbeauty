@@ -231,17 +231,44 @@ export default function PlannenInner({
   };
 
   const createBooking = async () => {
+    if (!selectedTime) {
+      alert("Selecteer een tijd alstublieft.");
+      return;
+    }
+
     setSaving(true);
     setMessage(null);
 
     try {
-      const appointmentsToInsert = selectedServices.map((serviceEntry) => ({
-        service_id: serviceEntry.id,
-        user_id: user.id,
-        date: selectedDate,
-        time: selectedTime,
-        status: "pending",
-      }));
+      // Helper functions to convert time
+      const toMinutes = (hhmm: string): number => {
+        const [h, m] = hhmm.split(":").map(Number);
+        return h * 60 + m;
+      };
+
+      const toHHMM = (min: number): string => {
+        const h = String(Math.floor(min / 60)).padStart(2, "0");
+        const m = String(min % 60).padStart(2, "0");
+        return `${h}:${m}`;
+      };
+
+      // Stagger each appointment to start after the previous one ends
+      let currentStartMinutes = toMinutes(selectedTime);
+      const appointmentsToInsert = selectedServices.map((serviceEntry) => {
+        const startTime = toHHMM(currentStartMinutes);
+        const appointment = {
+          service_id: serviceEntry.id,
+          user_id: user.id,
+          date: selectedDate,
+          time: startTime,
+          status: "pending" as const,
+        };
+
+        // Move to the next start time (after this service's duration + buffer)
+        currentStartMinutes += serviceEntry.duration_minutes + serviceEntry.buffer_minutes;
+
+        return appointment;
+      });
 
       const { data, error } = await supabase
         .from("appointments")
