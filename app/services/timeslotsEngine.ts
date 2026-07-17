@@ -22,9 +22,21 @@ function rangesOverlap(startA: number, endA: number, startB: number, endB: numbe
   return startA < endB && endA > startB;
 }
 
+type BookingServiceLike = {
+  duration_minutes: number;
+  buffer_minutes: number;
+};
+
+function normalizeServices(
+  serviceOrServices: BookingServiceLike | BookingServiceLike[] | null | undefined
+): BookingServiceLike[] {
+  if (!serviceOrServices) return [];
+  return Array.isArray(serviceOrServices) ? serviceOrServices : [serviceOrServices];
+}
+
 export function getTimeslotsForDate(params: {
   date: string;
-  service: { duration_minutes: number; buffer_minutes: number };
+  service: BookingServiceLike | BookingServiceLike[];
   generalHours: GeneralHour[];
   customHours: CustomHour[];
   blockedHours: BlockedHour[];
@@ -39,8 +51,13 @@ export function getTimeslotsForDate(params: {
     appointments,
   } = params;
 
-  // Total time needed (service + buffer)
-  const total = service.duration_minutes + service.buffer_minutes;
+  const selectedServices = normalizeServices(service);
+  if (selectedServices.length === 0) return [];
+
+  // Total time needed for the full booking block (service + buffer for each selected service)
+  const total = selectedServices.reduce((sum, selectedService) => {
+    return sum + selectedService.duration_minutes + selectedService.buffer_minutes;
+  }, 0);
 
   // Determine weekday name (monday, tuesday...)
   const day = new Date(date);
@@ -61,7 +78,7 @@ export function getTimeslotsForDate(params: {
     ? toMinutes(custom.open_time)!
     : toMinutes(general.open_time)!;
 
-  let closeMin = custom?.close_time
+  const closeMin = custom?.close_time
     ? toMinutes(custom.close_time)!
     : toMinutes(general.close_time)!;
 
@@ -89,9 +106,15 @@ export function getTimeslotsForDate(params: {
   }
 
   // Loop through every 30-minute start time
-  // Allow booking exactly at closing time
+  // Only allow booking if the entire combined block fits before closing
   for (let start = openMin; start <= closeMin; start += 30) {
     const end = start + total;
+
+    // Check if the entire block fits within operating hours
+    if (end > closeMin) {
+      break;
+    }
+
     let conflict = false;
 
     // Check blocked hours overlap
