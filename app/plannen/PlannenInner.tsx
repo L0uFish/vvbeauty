@@ -149,6 +149,21 @@ export default function PlannenInner({
     0
   );
 
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+
+    if (hours > 0 && mins > 0) {
+      return `${hours} uur${hours === 1 ? "" : "en"} en ${mins} minuut${mins === 1 ? "" : "en"}`;
+    }
+
+    if (hours > 0) {
+      return `${hours} uur${hours === 1 ? "" : "en"}`;
+    }
+
+    return `${mins} minuut${mins === 1 ? "" : "en"}`;
+  };
+
   const addableServices = availableServices.filter(
     (serviceOption) => !selectedServices.some((selected) => selected.id === serviceOption.id)
   );
@@ -338,7 +353,7 @@ export default function PlannenInner({
             </div>
           )}
 
-          <p className="plannen-duration">Totale geplande tijd: {totalBookingMinutes} minuten</p>
+          <p className="plannen-duration">Totale geplande tijd: {formatDuration(totalBookingMinutes)}</p>
         </div>
 
         <Calendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
